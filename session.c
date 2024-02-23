@@ -20,12 +20,11 @@ session(int fd)
 {
     int n;
     char buf[1024];
-    //n = read(fd, buf, sizeof buf);
-    //if (n > 0) {
-    //return rcmain(buf, fd);
+    //while (1) {
+        n = read(fd, buf, sizeof buf);
+        
     //}
-    close(fd);
-    // write(dbg, buf, n);
+        //return rcmain(buf, fd);
     // sed out any line that says 'service=cpu' and put 'service=unix'
     return -1;
 }

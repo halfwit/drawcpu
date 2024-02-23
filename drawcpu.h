@@ -8,5 +8,4 @@ extern char *getuser(void);
 extern int session(int);
 extern char *estrdup(char*);
 extern int aanclient(char*, int);
-extern int p9authsrv(char*, char*);
 extern int dbg;

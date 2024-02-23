@@ -8,6 +8,7 @@
 #include "authsrv.h"
 
 char *argv0;
+char *authserver = "";
 
 void
 sizebug(void)
@@ -43,7 +44,6 @@ int
 main(int argc, char **argv)
 {
 	int fd;
-	char *authdom;
 	extern ulong kerndate;
 
 	kerndate = seconds();
@@ -52,11 +52,6 @@ main(int argc, char **argv)
 		eve = "drawcpu";
 
 	sizebug();
-
-	/* TODO: Flag/env in password + authdom or nvram */
-	authdom = "9front";
-    char *pass = "cinnamon";
-
 	osinit();
 	procinit0();
 	printinit();
@@ -77,16 +72,9 @@ main(int argc, char **argv)
 	bind("#N", "/dev", MAFTER);
 	bind("#C", "/", MAFTER);
 
-	dbg = open("/dev/null", ORDWR);
-	fprint(dbg, "Starting debug\n");
-	if((fd = p9authsrv(authdom, pass)) < 0){
-		fprint(dbg, "unable to authenticate client: %r\n");
-		goto Exit;
-	}
+	fd = open("/dev/cons", ORDWR);
 	if(session(fd) < 0)
 		fprint(dbg, "session failed: %r\n");
-Exit:
 	close(fd);
-
 	_exit(0);
 }

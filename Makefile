@@ -6,7 +6,6 @@ OFILES=\
 	main.$O\
 	session.$O\
 	aan.$O\
-	auth.$O\
 	secstore.$O\
 	latin1.$O\
 	$(OS)-factotum.$O\

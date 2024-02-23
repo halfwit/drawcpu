@@ -1,0 +1,40 @@
+NOTES:
+Some builtins will be required **TEST** 
+ - 'mount'
+ - 'bind'
+ - 'auth/factotum'
+ - 'auth/secstore'
+ - 'ns'
+ - Can run a command or interactive shell
+ - The profile is ran (!!!)
+
+TODO:
+ - [ ] have it export a var $service=unix or $service=windows
+ - [ ] Some people probably want aan?
+ - [ ] Move rc code to use our libc.h, u.h everywhere so our defs of open + such are correct
+ - [ ] gui-cocoa try to capture the windows we create so we can send mouse/keyboard to it, plist for launchd
+ - [ ] gui-wl cannibalize the wayland shims
+ - [ ] handle notes and signals
+ - [x] Remove listen1 outright, it's messing everything up.
+ - [x] tlssrv, but use internal factotum bits
+ - [ ] create namespaces with our bind/mount and allow report via ns(1)
+ - [ ] define the gui interface
+ - [ ] Makefile librc --> librc.a
+ - [ ] move much of io.c and exec.c into our cpu space
+      - It looks like it's mostly broken out into unix.c/plan9.c to where the defs we'd want are and builtins
+      - Could pull in exec.c into the cpu scope instead of where it is, provide pieces into the library or abstracted out? Unsure. 
+
+Kernel space needs:
+ - devdraw, devkbd, devmouse, devaudio - wrong side
+ - devcmd - we'll need more insight as to what this really does
+ - devcons - needed, console
+ - devenv - needed, env vars
+ - devfs - needed, local files
+ - devip - needed, networking
+ - devlfd - I am unsure
+ - devmnt - needed, client shares
+ - devpipe - probably needed for any pipe
+ - devroot - needed, base of stack
+ - devssl - needed, ssl
+ - devtab - meta, needed
+ - devtls - needed! probably before connection even happens, though it may be odd scoping there, we may just need to bind it up just after the accept

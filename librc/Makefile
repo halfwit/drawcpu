@@ -1,7 +1,7 @@
 ROOT=..
 include ../Make.config
-
 LIB=librc.a
+
 OFILES=\
 	code.$O\
 	exec.$O\
@@ -18,13 +18,14 @@ OFILES=\
 	tree.$O\
 	var.$O\
 	havefork.$O\
-	unix.$O\
-	y.tab.c
+	drawcpu.$O\
+	y.tab.$O\
 
 default: $(LIB)
-$(LIB): $(OFILES) $(YFILES)
-	$(AR) r $(LIB) $(OFILES) $(YFILES)
+$(LIB): $(OFILES)
+	$(AR) r $(LIB) $(OFILES)
 	$(RANLIB) $(LIB)
 
 %.$O: %.c
 	$(CC) $(CFLAGS) $*.c
+	

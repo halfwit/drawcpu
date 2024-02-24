@@ -168,19 +168,6 @@ emalloc(int n)
 	return p;
 }
 
-static char*
-estrdup(char *s)
-{
-	char *d;
-	int n;
-
-	n = strlen(s)+1;
-	d = emalloc(n);
-	memmove(d, s, n);
-	return d;
-}
-
-
 /*
  * Decode a[0..len] as a BER encoding of an ASN1 type.
  * The return value is one of ASN_OK, etc.

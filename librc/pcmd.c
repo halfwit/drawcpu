@@ -1,6 +1,7 @@
-#include "rc.h"
+#include <rc.h>
 #include "io.h"
 #include "fns.h"
+#include "y.tab.h"
 
 #define	c0	t->child[0]
 #define	c1	t->child[1]

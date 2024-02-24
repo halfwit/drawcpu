@@ -1,6 +1,7 @@
-#include "rc.h"
+#include <rc.h>
 #include "exec.h"
 #include "fns.h"
+#include "y.tab.h"
 
 var *gvar[NVAR];
 

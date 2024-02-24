@@ -85,6 +85,7 @@ extern	void	osyield(void);
 extern	void	setmalloctag(void*, uintptr);
 extern	void	setrealloctag(void*, uintptr);
 extern	int	errstr(char*, uint);
+extern  char *estrdup(char*);
 extern	int	rerrstr(char*, uint);
 extern	int	encrypt(void*, void*, int);
 extern	int	decrypt(void*, void*, int);

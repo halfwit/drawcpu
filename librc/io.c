@@ -1,4 +1,6 @@
-#include "rc.h"
+#include <u.h>
+#include <libc.h>
+#include <rc.h>
 #include "exec.h"
 #include "io.h"
 #include "fns.h"
@@ -148,10 +150,10 @@ void
 pptr(io *f, void *p)
 {
 	static char hex[] = "0123456789ABCDEF";
-	unsigned long long v;
+	unsigned long v;
 	int n;
 
-	v = (unsigned long long)p;
+	v = (unsigned long)p;
 	if(sizeof(v) == sizeof(p) && v>>32)
 		for(n = 60;n>=32;n-=4) pchr(f, hex[(v>>n)&0xF]);
 	for(n = 28;n>=0;n-=4) pchr(f, hex[(v>>n)&0xF]);
@@ -274,8 +276,8 @@ flushio(io *f)
 	}
 	else{
 		n = f->bufp - f->buf;
-		if(n && Write(f->fd, f->buf, n) != n){
-			Write(2, "Write error\n", 12);
+		if(n && write(f->fd, f->buf, n) != n){
+			write(2, "Write error\n", 12);
 			if(ntrap)
 				dotrap();
 		}
@@ -287,7 +289,7 @@ flushio(io *f)
 void
 closeio(io *f)
 {
-	if(f->fd>=0) Close(f->fd);
+	if(f->fd>=0) close(f->fd);
 	free(closeiostr(f));
 }
 
@@ -295,7 +297,7 @@ int
 emptyiobuf(io *f)
 {
 	int n;
-	if(f->fd<0 || (n = Read(f->fd, f->buf, NBUF))<=0) return EOF;
+	if(f->fd<0 || (n = read(f->fd, f->buf, NBUF))<=0) return EOF;
 	f->bufp = f->buf;
 	f->ebuf = f->buf + n;
 	return *f->bufp++;

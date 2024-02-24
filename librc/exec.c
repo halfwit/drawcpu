@@ -1,4 +1,7 @@
-#include "rc.h"
+#include <u.h>
+#include <libc.h>
+#include <rc.h>
+#include <errno.h>
 #include "getflags.h"
 #include "exec.h"
 #include "io.h"
@@ -222,12 +225,11 @@ shuffleredir(void)
  * start interpreting code
  */
 void
-rcmain(int argc, char *argv[])
+runscript(int fd, int argc, char **argv)
 {
 	code bootstrap[20];
 	char num[12];
 	char *rcmain=Rcmain;
-
 	int i;
 	argv0 = argv[0];
 	argc = getflags(argc, argv, "srdiIlxebpvVc:1m:1[command]", 1);
@@ -241,8 +243,8 @@ rcmain(int argc, char *argv[])
 	if(flag['m']) rcmain = flag['m'][0];
 	err = openiofd(2);
 	kinit();
-	Trapinit();
-	Vinit();
+	notify(notifyf);
+	// Vinit();
 	inttoascii(num, mypid = getpid());
 	setvar("pid", newword(num, (word *)0));
 	setvar("cflag", flag['c']?newword(flag['c'][0], (word *)0)
@@ -346,11 +348,11 @@ Xappend(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = Open(file, 1))<0 && (fd = Creat(file))<0){
-		Xerror3(">> can't open", file, Errstr());
+	if((fd = open(file, 1))<0 && (fd = create(file, ORDWR, 0644))<0){
+		Xerror3(">> can't open", file, strerror(errno));
 		return;
 	}
-	Seek(fd, 0L, 2);
+	seek(fd, 0L, 2);
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
 	poplist();
 }
@@ -401,7 +403,7 @@ Xexit(void)
 			return;
 		}
 	}
-	Exit();
+	_exit(0);
 }
 
 void
@@ -468,7 +470,7 @@ herefile(char *tmp)
 	}
 	s++;
 	for(i='a'; i<'z'; i++){
-		if(access(tmp, 0)!=0 && (fd = Creat(tmp))>=0)
+		if(access(tmp, 0)!=0 && (fd = create(tmp, ORDWR, 0644))>=0)
 			return fd;
 		*s = i;
 	}
@@ -483,7 +485,7 @@ Xhere(void)
 	io *io;
 
 	if((fd = herefile(file))<0){
-		Xerror3("<< can't get temp file", file, Errstr());
+		Xerror3("<< can't get temp file", file, strerror(errno));
 		return;
 	}
 	io = openiofd(fd);
@@ -492,8 +494,8 @@ Xhere(void)
 	closeio(io);
 
 	/* open for reading and unlink */
-	if((fd = Open(file, 3))<0){
-		Xerror3("<< can't open", file, Errstr());
+	if((fd = open(file, 3))<0){
+		Xerror3("<< can't open", file, strerror(errno));
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -506,16 +508,16 @@ Xhereq(void)
 	int fd;
 
 	if((fd = herefile(file))<0){
-		Xerror3("<< can't get temp file", file, Errstr());
+		Xerror3("<< can't get temp file", file, strerror(errno));
 		return;
 	}
 	body = runq->code[runq->pc++].s;
-	Write(fd, body, strlen(body));
-	Close(fd);
+	write(fd, body, strlen(body));
+	close(fd);
 
 	/* open for reading and unlink */
-	if((fd = Open(file, 3))<0){
-		Xerror3("<< can't open", file, Errstr());
+	if((fd = open(file, 3))<0){
+		Xerror3("<< can't open", file, strerror(errno));
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -538,8 +540,8 @@ Xread(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = Open(file, 0))<0){
-		Xerror3("< can't open", file, Errstr());
+	if((fd = open(file, 0))<0){
+		Xerror3("< can't open", file, strerror(errno));
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -563,8 +565,8 @@ Xrdwr(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = Open(file, 2))<0){
-		Xerror3("<> can't open", file, Errstr());
+	if((fd = open(file, 2))<0){
+		Xerror3("<> can't open", file, strerror(errno));
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -580,7 +582,7 @@ Xpopredir(void)
 		panic("Xpopredir null!", 0);
 	runq->redir = rp->next;
 	if(rp->type==ROPEN)
-		Close(rp->from);
+		close(rp->from);
 	free(rp);
 }
 
@@ -591,7 +593,7 @@ Xreturn(void)
 		Xpopredir();
 	popthread();
 	if(runq==0)
-		Exit();
+		_exit(0);
 }
 
 void
@@ -638,8 +640,8 @@ Xwrite(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = Creat(file))<0){
-		Xerror3("> can't create", file, Errstr());
+	if((fd = create(file, ORDWR, 0644))<0){
+		Xerror3("> can't create", file, strerror(errno));
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -1020,8 +1022,8 @@ Xrdcmds(void)
 	Noerror();
 	nerror = 0;
 	if(yyparse()){
-		if(p->iflag && (!lex->eof || Eintr())){
-			if(Eintr()){
+		if(p->iflag && (!lex->eof || errno == EINTR)){
+			if(errno == EINTR){
 				pchr(err, '\n');
 				lex->eof = 0;
 			}

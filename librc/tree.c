@@ -1,7 +1,9 @@
-#include "rc.h"
+#include <u.h>
+#include <libc.h>
+#include <rc.h>
 #include "io.h"
 #include "fns.h"
-
+#include "y.tab.h"
 /*
  * create and clear a new tree node, and add it
  * to the node list.

@@ -1,7 +1,8 @@
-#include "rc.h"
+#include <rc.h>
 #include "exec.h"
 #include "fns.h"
 #include "io.h"
+#include "y.tab.h"
 
 int ntrap;
 int trap[NSIG];
@@ -16,7 +17,7 @@ dotrap(void)
 	while(ntrap) for(i = 0;i<NSIG;i++) while(trap[i]){
 		--trap[i];
 		--ntrap;
-		if(getpid()!=mypid) Exit();
+		if(getpid()!=mypid) _exit(0);
 		trapreq = vlook(Signame[i]);
 		if(trapreq->fn)
 			startfunc(trapreq, copywords(starval, (word*)0), (var*)0, (redir*)0);
@@ -29,6 +30,6 @@ dotrap(void)
 			 */
 			while(!runq->iflag) Xreturn();
 		}
-		else Exit();
+		else _exit(0);
 	}
 }

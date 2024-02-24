@@ -17,6 +17,7 @@ LIBS1=\
 	libauth/libauth.a\
 	libauthsrv/libauthsrv.a\
 	libsec/libsec.a\
+	librc/librc.a\
 	libmp/libmp.a\
 	libmemdraw/libmemdraw.a\
 	libmemlayer/libmemlayer.a\
@@ -24,7 +25,6 @@ LIBS1=\
 	gui-$(GUI)/libgui.a\
 	libc/libc.a\
 	libip/libip.a\
-	#librc/librc.a\
 
 # stupid gcc
 LIBS=$(LIBS1) $(LIBS1) $(LIBS1) libmachdep.a
@@ -54,11 +54,11 @@ libauthsrv/libauthsrv.a:
 libmp/libmp.a:
 	(cd libmp; $(MAKE))
 
-libsec/libsec.a:
-	(cd libsec; $(MAKE))
-
 librc/librc.a:
 	(cd librc; $(MAKE))
+
+libsec/libsec.a:
+	(cd libsec; $(MAKE))
 
 libmemdraw/libmemdraw.a:
 	(cd libmemdraw; $(MAKE))

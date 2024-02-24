@@ -1,7 +1,10 @@
 /*
  * Maybe `simple' is a misnomer.
  */
-#include "rc.h"
+#include <u.h>
+#include <libc.h>
+#include <rc.h>
+#include <errno.h>
 #include "getflags.h"
 #include "exec.h"
 #include "io.h"
@@ -94,7 +97,7 @@ Xsimple(void)
 		}
 		else{
 			if((pid = execforkexec()) < 0){
-				Xerror2("try again", Errstr());
+				Xerror2("try again", strerror(errno));
 				return;
 			}
 			poplist();
@@ -114,15 +117,15 @@ doredir(redir *rp)
 		switch(rp->type){
 		case ROPEN:
 			if(rp->from!=rp->to){
-				Dup(rp->from, rp->to);
-				Close(rp->from);
+				dup2(rp->from, rp->to);
+				close(rp->from);
 			}
 			break;
 		case RDUP:
-			Dup(rp->from, rp->to);
+			dup2(rp->from, rp->to);
 			break;
 		case RCLOSE:
-			Close(rp->from);
+			close(rp->from);
 			break;
 		}
 	}
@@ -144,7 +147,7 @@ searchpath(char *w, char *v)
 }
 
 char*
-makepath(char *dir, char *file)
+rcmakepath(char *dir, char *file)
 {
 	char *path;
 	int m, n = strlen(dir);
@@ -184,10 +187,11 @@ execexec(void)
 	Updenv();
 	doredir(runq->redir);
 	for(path = searchpath(argv[1], "path"); path; path = path->next){
-		argv[0] = makepath(path->word, argv[1]);
-		Exec(argv);
+		argv[0] = rcmakepath(path->word, argv[1]);
+		// TODO: execve + env from our fs
+		execv(argv[0], argv+1);
 	}
-	setstatus(Errstr());
+	setstatus(strerror(errno));
 	pfln(err, srcfile(runq), runq->line);
 	pfmt(err, ": %s: %s\n", argv[1], getstatus());
 	Xexit();
@@ -215,8 +219,8 @@ execcd(void)
 	case 2:
 		a = a->next;
 		for(cdpath = searchpath(a->word, "cdpath"); cdpath; cdpath = cdpath->next){
-			dir = makepath(cdpath->word, a->word);
-			if(Chdir(dir)>=0){
+			dir = rcmakepath(cdpath->word, a->word);
+			if(chdir(dir)>=0){
 				if(cdpath->word[0] != '\0' && strcmp(cdpath->word, ".") != 0)
 					pfmt(err, "%s\n", dir);
 				free(dir);
@@ -226,15 +230,15 @@ execcd(void)
 			free(dir);
 		}
 		if(cdpath==0)
-			pfmt(err, "Can't cd %s: %s\n", a->word, Errstr());
+			pfmt(err, "Can't cd %s: %s\n", a->word, strerror(errno));
 		break;
 	case 1:
 		a = vlook("home")->val;
 		if(a){
-			if(Chdir(a->word)>=0)
+			if(chdir(a->word)>=0)
 				setstatus("");
 			else
-				pfmt(err, "Can't cd %s: %s\n", a->word, Errstr());
+				pfmt(err, "Can't cd %s: %s\n", a->word, strerror(errno));
 		}
 		else
 			pfmt(err, "Can't cd -- $home empty\n");
@@ -394,20 +398,15 @@ Usage:
 	file = 0;
 	fd = -1;
 	for(path = searchpath(argv->word, "path"); path; path = path->next){
-		file = makepath(path->word, argv->word);
-		fd = Open(file, 0);
+		file = rcmakepath(path->word, argv->word);
+		fd = open(file, 0);
 		if(fd >= 0)
 			break;
-		if(strcmp(file, "/dev/stdin")==0){	/* for sun & ucb */
-			fd = Dup1(0);
-			if(fd>=0)
-				break;
-		}
 		free(file);
 	}
 	if(fd<0){
 		if(!qflag)
-			Xerror3(". can't open", argv->word, Errstr());
+			Xerror3(". can't open", argv->word, strerror(errno));
 		freewords(argv);
 		return;
 	}
@@ -501,7 +500,7 @@ execwhatis(void){	/* mildly wrong -- should fork before writing */
 				pfmt(out, "builtin %s\n", a->word);
 			else {
 				for(path = searchpath(a->word, "path"); path; path = path->next){
-					file = makepath(path->word, a->word);
+					file = rcmakepath(path->word, a->word);
 					if(Executable(file)){
 						pfmt(out, "%s\n", file);
 						free(file);

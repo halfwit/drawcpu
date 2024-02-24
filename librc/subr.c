@@ -1,4 +1,6 @@
-#include "rc.h"
+#include <u.h>
+#include <libc.h>
+#include <rc.h>
 #include "io.h"
 #include "fns.h"
 
@@ -18,15 +20,6 @@ erealloc(void *p, long n)
 	if(p==0 && n!=0)
 		panic("Can't realloc %d bytes\n", n);
 	return p;
-}
-
-char*
-estrdup(char *s)
-{
-	int n = strlen(s)+1;
-	char *d = emalloc(n);
-	memmove(d, s, n);
-	return d;
 }
 
 void
@@ -60,15 +53,4 @@ inttoascii(char *s, int n)
 	bp = s;
 	iacvt(n);
 	*bp='\0';
-}
-
-void
-panic(char *s, int n)
-{
-	pfmt(err, "%s: ", argv0);
-	pfmt(err, s, n);
-	pchr(err, '\n');
-	flushio(err);
-
-	Abort();
 }

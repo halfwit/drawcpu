@@ -22,9 +22,6 @@
 #endif
 
 #define	YYMAXDEPTH	500
-#ifndef PAREN
-#include "y.tab.h"
-#endif
 typedef struct tree tree;
 typedef struct word word;
 typedef struct io io;
@@ -35,9 +32,6 @@ typedef struct lexer lexer;
 typedef struct redir redir;
 typedef struct thread thread;
 typedef struct builtin builtin;
-
-#pragma incomplete word
-#pragma incomplete io
 
 struct tree{
 	int	type;
@@ -58,7 +52,7 @@ tree *mung3(tree*, tree*, tree*, tree*), *epimung(tree*, tree*);
 tree *simplemung(tree*);
 tree *globprop(tree*);
 char *fnstr(tree*);
-
+void runscript(int, int, char**);
 /*
  * The first word of any code vector is a reference count
  * and the second word is a string for srcfile().
@@ -129,7 +123,6 @@ extern var *gvar[NVAR];		/* hash for globals */
 
 void *emalloc(long);
 void *erealloc(void *, long);
-char *estrdup(char*);
 
 /*
  * Glob character escape in strings:

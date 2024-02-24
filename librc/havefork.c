@@ -1,4 +1,7 @@
-#include "rc.h"
+#include <u.h>
+#include <libc.h>
+#include <rc.h>
+#include <errno.h>
 #include "getflags.h"
 #include "exec.h"
 #include "io.h"
@@ -48,9 +51,9 @@ Xasync(void)
 	int pid;
 	char npid[10];
 
-	switch(pid = Fork()){
+	switch(pid = fork()){
 	case -1:
-		Xerror2("try again", Errstr());
+		Xerror2("try again", strerror(errno));
 		break;
 	case 0:
 		clearwaitpids();
@@ -76,23 +79,23 @@ Xpipe(void)
 	int pfd[2];
 
 	if(pipe(pfd)<0){
-		Xerror2("can't get pipe", Errstr());
+		Xerror2("can't get pipe", strerror(errno));
 		return;
 	}
-	switch(pid = Fork()){
+	switch(pid = fork()){
 	case -1:
-		Xerror2("try again", Errstr());
+		Xerror2("try again", strerror(errno));
 		break;
 	case 0:
 		clearwaitpids();
-		Close(pfd[PRD]);
+		close(pfd[PRD]);
 		start(p->code, pc+2, runq->local, runq->redir);
 		runq->ret = 0;
 		pushredir(ROPEN, pfd[PWR], lfd);
 		break;
 	default:
 		addwaitpid(pid);
-		Close(pfd[PWR]);
+		close(pfd[PWR]);
 		start(p->code, p->code[pc].i, runq->local, runq->redir);
 		pushredir(ROPEN, pfd[PRD], rfd);
 		p->pc = p->code[pc+1].i;
@@ -114,24 +117,24 @@ Xbackq(void)
 	io *f;
 
 	if(pipe(pfd)<0){
-		Xerror2("can't make pipe", Errstr());
+		Xerror2("can't make pipe", strerror(errno));
 		return;
 	}
-	switch(pid = Fork()){
+	switch(pid = fork()){
 	case -1:
-		Xerror2("try again", Errstr());
-		Close(pfd[PRD]);
-		Close(pfd[PWR]);
+		Xerror2("try again", strerror(errno));
+		close(pfd[PRD]);
+		close(pfd[PWR]);
 		return;
 	case 0:
 		clearwaitpids();
-		Close(pfd[PRD]);
+		close(pfd[PRD]);
 		start(runq->code, runq->pc+1, runq->local, runq->redir);
 		pushredir(ROPEN, pfd[PWR], 1);
 		return;
 	default:
 		addwaitpid(pid);
-		Close(pfd[PWR]);
+		close(pfd[PWR]);
 
 		split = Popword();
 		poplist();
@@ -163,7 +166,7 @@ Xpipefd(void)
 	int sidefd, mainfd;
 
 	if(pipe(pfd)<0){
-		Xerror2("can't get pipe", Errstr());
+		Xerror2("can't get pipe", strerror(errno));
 		return;
 	}
 	if(p->code[pc].i==READ){
@@ -174,20 +177,20 @@ Xpipefd(void)
 		sidefd = pfd[PRD];
 		mainfd = pfd[PWR];
 	}
-	switch(pid = Fork()){
+	switch(pid = fork()){
 	case -1:
-		Xerror2("try again", Errstr());
+		Xerror2("try again", strerror(errno));
 		break;
 	case 0:
 		clearwaitpids();
-		Close(mainfd);
+		close(mainfd);
 		start(p->code, pc+2, runq->local, runq->redir);
 		pushredir(ROPEN, sidefd, p->code[pc].i==READ?1:0);
 		runq->ret = 0;
 		break;
 	default:
 		addwaitpid(pid);
-		Close(sidefd);
+		close(sidefd);
 		pushredir(ROPEN, mainfd, mainfd);
 		shuffleredir();	/* shuffle redir to bottom of stack for Xpopredir() */
 		strcpy(name, Fdprefix);
@@ -203,9 +206,9 @@ Xsubshell(void)
 {
 	int pid;
 
-	switch(pid = Fork()){
+	switch(pid = fork()){
 	case -1:
-		Xerror2("try again", Errstr());
+		Xerror2("try again", strerror(errno));
 		break;
 	case 0:
 		clearwaitpids();
@@ -226,7 +229,7 @@ execforkexec(void)
 {
 	int pid;
 
-	switch(pid = Fork()){
+	switch(pid = fork()){
 	case -1:
 		return -1;
 	case 0:

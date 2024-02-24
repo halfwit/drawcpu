@@ -1,7 +1,8 @@
-#include "rc.h"
+#include <rc.h>
 #include "exec.h"
 #include "io.h"
 #include "fns.h"
+#include "y.tab.h"
 
 void psubst(io*, unsigned char*);
 void pstrs(io*, word*);

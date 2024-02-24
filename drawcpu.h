@@ -6,6 +6,5 @@ extern int exportfs(int, int);
 extern int dialfactotum(void);
 extern char *getuser(void);
 extern int session(int);
-extern char *estrdup(char*);
 extern int aanclient(char*, int);
 extern int dbg;

@@ -9,6 +9,7 @@
 
 char *argv0;
 char *authserver = "";
+char *dbgfile = "./debug.log";
 
 void
 sizebug(void)
@@ -72,7 +73,9 @@ main(int argc, char **argv)
 	bind("#N", "/dev", MAFTER);
 	bind("#C", "/", MAFTER);
 
+	/* TODO: flag for debug */
 	fd = open("/dev/cons", ORDWR);
+	dbg = open(dbgfile, OWRITE);
 	if(session(fd) < 0)
 		fprint(dbg, "session failed: %r\n");
 	close(fd);

@@ -126,7 +126,7 @@
 /* Copy the first part of user declarations.  */
 #line 12 "syn.y"
 
-#include "rc.h"
+#include <rc.h>
 #include "fns.h"
 
 

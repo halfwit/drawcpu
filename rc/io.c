@@ -1,6 +1,4 @@
-#include <u.h>
-#include <libc.h>
-#include <rc.h>
+#include "rc.h"
 #include "exec.h"
 #include "io.h"
 #include "fns.h"
@@ -276,8 +274,8 @@ flushio(io *f)
 	}
 	else{
 		n = f->bufp - f->buf;
-		if(n && write(f->fd, f->buf, n) != n){
-			write(2, "Write error\n", 12);
+		if(n && Write(f->fd, f->buf, n) != n){
+			Write(2, "Write error\n", 12);
 			if(ntrap)
 				dotrap();
 		}
@@ -289,7 +287,7 @@ flushio(io *f)
 void
 closeio(io *f)
 {
-	if(f->fd>=0) close(f->fd);
+	if(f->fd>=0) Close(f->fd);
 	free(closeiostr(f));
 }
 
@@ -297,7 +295,7 @@ int
 emptyiobuf(io *f)
 {
 	int n;
-	if(f->fd<0 || (n = read(f->fd, f->buf, NBUF))<=0) return EOF;
+	if(f->fd<0 || (n = Read(f->fd, f->buf, NBUF))<=0) return EOF;
 	f->bufp = f->buf;
 	f->ebuf = f->buf + n;
 	return *f->bufp++;

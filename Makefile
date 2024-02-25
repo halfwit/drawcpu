@@ -4,7 +4,6 @@ include Make.config
 
 OFILES=\
 	main.$O\
-	session.$O\
 	aan.$O\
 	secstore.$O\
 	latin1.$O\
@@ -17,7 +16,7 @@ LIBS1=\
 	libauth/libauth.a\
 	libauthsrv/libauthsrv.a\
 	libsec/libsec.a\
-	librc/librc.a\
+	rc/librc.a\
 	libmp/libmp.a\
 	libmemdraw/libmemdraw.a\
 	libmemlayer/libmemlayer.a\
@@ -54,9 +53,6 @@ libauthsrv/libauthsrv.a:
 libmp/libmp.a:
 	(cd libmp; $(MAKE))
 
-librc/librc.a:
-	(cd librc; $(MAKE))
-
 libsec/libsec.a:
 	(cd libsec; $(MAKE))
 
@@ -74,6 +70,9 @@ libc/libc.a:
 
 libip/libip.a:
 	(cd libip; $(MAKE))
+
+rc/librc.a:
+	(cd rc; $(MAKE))
 
 gui-$(GUI)/libgui.a:
 	(cd gui-$(GUI); $(MAKE))

@@ -1,11 +1,8 @@
-#include <u.h>
-#include <libc.h>
-#include <rc.h>
+#include "rc.h"
 #include "io.h"
 #include "exec.h"
 #include "fns.h"
 #include "getflags.h"
-#include "y.tab.h"
 #define	c0	t->child[0]
 #define	c1	t->child[1]
 #define	c2	t->child[2]

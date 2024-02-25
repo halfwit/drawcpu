@@ -4,24 +4,17 @@
  * Please don't litter the code with ifdefs.  The three below (and one in
  * getflags) should be enough.
  */
-#ifdef Plan9
+
 #include <u.h>
 #include <libc.h>
-#define NSIG	32
+
 #define	SIGINT	2
 #define	SIGQUIT	3
-#else
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <string.h>
-#include <signal.h>
-#ifndef NSIG
-#define NSIG 32
-#endif
-#endif
 
 #define	YYMAXDEPTH	500
+#ifndef PAREN
+#include "y.tab.h"
+#endif
 typedef struct tree tree;
 typedef struct word word;
 typedef struct io io;
@@ -52,7 +45,7 @@ tree *mung3(tree*, tree*, tree*, tree*), *epimung(tree*, tree*);
 tree *simplemung(tree*);
 tree *globprop(tree*);
 char *fnstr(tree*);
-void runscript(int, int, char**);
+
 /*
  * The first word of any code vector is a reference count
  * and the second word is a string for srcfile().

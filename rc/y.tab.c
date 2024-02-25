@@ -126,7 +126,7 @@
 /* Copy the first part of user declarations.  */
 #line 12 "syn.y"
 
-#include <rc.h>
+#include "rc.h"
 #include "fns.h"
 
 
@@ -201,20 +201,9 @@ typedef YYTYPE_INT16 yytype_int16;
 typedef short int yytype_int16;
 #endif
 
-#ifndef YYSIZE_T
-# ifdef __SIZE_TYPE__
-#  define YYSIZE_T __SIZE_TYPE__
-# elif defined size_t
-#  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
-#  define YYSIZE_T size_t
-# else
-#  define YYSIZE_T unsigned int
-# endif
-#endif
-
+/* Hand changed */
+#include <stddef.h>
+#define YYSIZE_T size_t
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_

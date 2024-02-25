@@ -1,11 +1,11 @@
-#include <u.h>
-#include <libc.h>
-#include <rc.h>
-#include <errno.h>
+#include "rc.h"
 #include "getflags.h"
 #include "exec.h"
 #include "io.h"
 #include "fns.h"
+#include "drawcpu.h"
+
+#include <errno.h>
 
 char *argv0="rc";
 io *err;
@@ -225,12 +225,13 @@ shuffleredir(void)
  * start interpreting code
  */
 void
-runscript(int fd, int argc, char **argv)
+runcommand(int argc, char **argv)
 {
 	code bootstrap[20];
 	char num[12];
 	char *rcmain=Rcmain;
-	int i;
+
+	int i, fd;
 	argv0 = argv[0];
 	argc = getflags(argc, argv, "srdiIlxebpvVc:1m:1[command]", 1);
 	if(argc==-1)
@@ -241,10 +242,13 @@ runscript(int fd, int argc, char **argv)
 		flag['i'] = 0;
 	else if(flag['i']==0 && argc==1 && Isatty(0)) flag['i'] = flagset;
 	if(flag['m']) rcmain = flag['m'][0];
-	err = openiofd(2);
+
+	fd = open("/dev/cons", ORDWR);
+	err = open("/dev/cons", OWRITE);
+	close(fd);
 	kinit();
-	notify(notifyf);
-	// Vinit();
+	Trapinit();
+	Vinit();
 	inttoascii(num, mypid = getpid());
 	setvar("pid", newword(num, (word *)0));
 	setvar("cflag", flag['c']?newword(flag['c'][0], (word *)0)
@@ -275,7 +279,6 @@ runscript(int fd, int argc, char **argv)
 	/* prime bootstrap argv */
 	pushlist();
 	for(i = argc-1;i!=0;--i) pushword(argv[i]);
-
 	for(;;){
 		if(flag['r'])
 			pfnc(err, runq);
@@ -348,11 +351,11 @@ Xappend(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = open(file, 1))<0 && (fd = create(file, ORDWR, 0644))<0){
-		Xerror3(">> can't open", file, strerror(errno));
+	if((fd = Open(file, 1))<0 && (fd = Creat(file))<0){
+		Xerror3(">> can't open", file, Errstr());
 		return;
 	}
-	seek(fd, 0L, 2);
+	Seek(fd, 0L, 2);
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
 	poplist();
 }
@@ -403,7 +406,7 @@ Xexit(void)
 			return;
 		}
 	}
-	_exit(0);
+	Exit();
 }
 
 void
@@ -470,7 +473,7 @@ herefile(char *tmp)
 	}
 	s++;
 	for(i='a'; i<'z'; i++){
-		if(access(tmp, 0)!=0 && (fd = create(tmp, ORDWR, 0644))>=0)
+		if(access(tmp, 0)!=0 && (fd = Creat(tmp))>=0)
 			return fd;
 		*s = i;
 	}
@@ -485,7 +488,7 @@ Xhere(void)
 	io *io;
 
 	if((fd = herefile(file))<0){
-		Xerror3("<< can't get temp file", file, strerror(errno));
+		Xerror3("<< can't get temp file", file, Errstr());
 		return;
 	}
 	io = openiofd(fd);
@@ -494,8 +497,8 @@ Xhere(void)
 	closeio(io);
 
 	/* open for reading and unlink */
-	if((fd = open(file, 3))<0){
-		Xerror3("<< can't open", file, strerror(errno));
+	if((fd = Open(file, 3))<0){
+		Xerror3("<< can't open", file, Errstr());
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -508,16 +511,16 @@ Xhereq(void)
 	int fd;
 
 	if((fd = herefile(file))<0){
-		Xerror3("<< can't get temp file", file, strerror(errno));
+		Xerror3("<< can't get temp file", file, Errstr());
 		return;
 	}
 	body = runq->code[runq->pc++].s;
-	write(fd, body, strlen(body));
-	close(fd);
+	Write(fd, body, strlen(body));
+	Close(fd);
 
 	/* open for reading and unlink */
-	if((fd = open(file, 3))<0){
-		Xerror3("<< can't open", file, strerror(errno));
+	if((fd = Open(file, 3))<0){
+		Xerror3("<< can't open", file, Errstr());
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -540,8 +543,8 @@ Xread(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = open(file, 0))<0){
-		Xerror3("< can't open", file, strerror(errno));
+	if((fd = Open(file, 0))<0){
+		Xerror3("< can't open", file, Errstr());
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -565,8 +568,8 @@ Xrdwr(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = open(file, 2))<0){
-		Xerror3("<> can't open", file, strerror(errno));
+	if((fd = Open(file, 2))<0){
+		Xerror3("<> can't open", file, Errstr());
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -582,7 +585,7 @@ Xpopredir(void)
 		panic("Xpopredir null!", 0);
 	runq->redir = rp->next;
 	if(rp->type==ROPEN)
-		close(rp->from);
+		Close(rp->from);
 	free(rp);
 }
 
@@ -593,7 +596,7 @@ Xreturn(void)
 		Xpopredir();
 	popthread();
 	if(runq==0)
-		_exit(0);
+		Exit();
 }
 
 void
@@ -640,8 +643,8 @@ Xwrite(void)
 		break;
 	}
 	file = runq->argv->words->word;
-	if((fd = create(file, ORDWR, 0644))<0){
-		Xerror3("> can't create", file, strerror(errno));
+	if((fd = Creat(file))<0){
+		Xerror3("> can't create", file, Errstr());
 		return;
 	}
 	pushredir(ROPEN, fd, runq->code[runq->pc++].i);
@@ -1022,8 +1025,8 @@ Xrdcmds(void)
 	Noerror();
 	nerror = 0;
 	if(yyparse()){
-		if(p->iflag && (!lex->eof || errno == EINTR)){
-			if(errno == EINTR){
+		if(p->iflag && (!lex->eof || errno==EINTR)){
+			if(errno==EINTR){
 				pchr(err, '\n');
 				lex->eof = 0;
 			}

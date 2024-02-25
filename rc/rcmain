@@ -1,4 +1,4 @@
-# rcmain: drawcpu version
+# rcmain: unix version
 if(~ $#home 0) home=$HOME
 if(~ $#ifs 0) ifs=' 	
 '

@@ -1,7 +1,4 @@
-#include <u.h>
-#include <libc.h>
-#include <dirent.h>
-#include <rc.h>
+#include "rc.h"
 #include "exec.h"
 #include "fns.h"
 
@@ -62,19 +59,9 @@ matchfn(char *s, char *p)
 static void
 pappend(char **pdir, char *name)
 {
-	char *path = rcmakepath(*pdir, name);
+	char *path = makercpath(*pdir, name);
 	free(*pdir);
 	*pdir = path;
-}
-
-char*
-nextdirent(void *arg)
-{
-	DIR *rd = arg;
-	struct dirent *ent = readdir(rd);
-	if(ent == NULL)
-		return 0;
-	return ent->d_name;
 }
 
 static word*
@@ -84,7 +71,7 @@ globdir(word *list, char *pattern, char *name)
 	void *dir;
 
 #ifdef Plan9
-	/* append slashes, readdir() already filtered directories */
+	/* append slashes, Readdir() already filtered directories */
 	while(*pattern=='/'){
 		pappend(&name, "/");
 		pattern++;
@@ -115,15 +102,15 @@ globdir(word *list, char *pattern, char *name)
 	*glob=GLOB;
 
 	/* read the directory and recur for any entry that matches */
-	dir = opendir(name[0]?name:".");
+	dir = Opendir(name[0]?name:".");
 	if(dir==0)
 		goto out;
 	slash=strchr(glob, '/');
-	while((entry=nextdirent(dir)) != 0){
+	while((entry=Readdir(dir, slash!=0)) != 0){
 		if(matchfn(entry, pattern))
-			list = globdir(list, slash?slash:"", rcmakepath(name, entry));
+			list = globdir(list, slash?slash:"", makercpath(name, entry));
 	}
-	closedir(dir);
+	Closedir(dir);
 out:
 	free(name);
 	return list;

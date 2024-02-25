@@ -1,6 +1,4 @@
-#include <u.h>
-#include <libc.h>
-#include <rc.h>
+#include "rc.h"
 #include "io.h"
 #include "fns.h"
 

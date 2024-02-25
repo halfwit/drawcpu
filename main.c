@@ -45,8 +45,8 @@ int
 main(int argc, char **argv)
 {
 	int fd;
+	char s[1024];
 	extern ulong kerndate;
-
 	kerndate = seconds();
 	eve = getuser();
 	if(eve == nil)
@@ -73,11 +73,22 @@ main(int argc, char **argv)
 	bind("#N", "/dev", MAFTER);
 	bind("#C", "/", MAFTER);
 
-	/* TODO: flag for debug */
-	fd = open("/dev/cons", ORDWR);
-	dbg = open(dbgfile, OWRITE);
-	if(session(fd) < 0)
-		fprint(dbg, "session failed: %r\n");
+    if(bind("/root", "/", MAFTER) < 0)
+		panic("bind /root: %r");
+
+	if((fd = open("/dev/cons", OREAD)) < 0)
+		panic("open stdin: %r");
+	if(read(fd, s, sizeof s) <= 0)
+		panic("read: %r");
 	close(fd);
+
+	char *cmd[] = {
+		"/bin/rc",
+		"-c",
+		s
+	};
+
+	printf("%s %s %s\n", cmd[0], cmd[1], cmd[2]);
+	runcommand(3, cmd);
 	_exit(0);
 }

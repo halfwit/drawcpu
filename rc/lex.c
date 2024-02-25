@@ -1,8 +1,7 @@
-#include <rc.h>
+#include "rc.h"
 #include "io.h"
 #include "getflags.h"
 #include "fns.h"
-#include "y.tab.h"
 
 lexer *lex;
 

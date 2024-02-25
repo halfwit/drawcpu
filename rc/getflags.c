@@ -1,4 +1,4 @@
-#include <rc.h>
+#include "rc.h"
 #include "getflags.h"
 #include "fns.h"
 char *flagset[] = {"<flag>"};
@@ -206,7 +206,7 @@ usage(char *tail)
 	}
 	errs("\n");
 	setstatus("bad flags");
-	_exit(0);
+	Exit();
 }
 
 static void
@@ -228,7 +228,7 @@ errc(int c)
 {
 	*bufp++=c;
 	if(bufp==&buf[NBUF] || c=='\n'){
-		write(2, buf, bufp-buf);
+		Write(2, buf, bufp-buf);
 		bufp = buf;
 	}
 }

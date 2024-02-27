@@ -243,9 +243,11 @@ runcommand(int argc, char **argv)
 	else if(flag['i']==0 && argc==1 && Isatty(0)) flag['i'] = flagset;
 	if(flag['m']) rcmain = flag['m'][0];
 
+	/* Open stdout so next desc is stderr */
 	fd = open("/dev/cons", ORDWR);
-	err = open("/dev/cons", OWRITE);
+	err = openiofd(open("/dev/cons", OWRITE));
 	close(fd);
+
 	kinit();
 	Trapinit();
 	Vinit();
@@ -275,7 +277,6 @@ runcommand(int argc, char **argv)
 	bootstrap[18].f = Xexit;
 	bootstrap[19].f = 0;
 	start(bootstrap, 2, (var*)0, (redir*)0);
-
 	/* prime bootstrap argv */
 	pushlist();
 	for(i = argc-1;i!=0;--i) pushword(argv[i]);
@@ -287,6 +288,7 @@ runcommand(int argc, char **argv)
 			dotrap();
 	}
 }
+
 /*
  * Opcode routines
  * Arguments on stack (...)

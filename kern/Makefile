@@ -5,6 +5,7 @@ LIB=libkern.a
 OFILES=\
 	alloc.$O\
 	allocb.$O\
+	await.$O\
 	chan.$O\
 	data.$O\
 	dev.$O\
@@ -26,17 +27,24 @@ OFILES=\
 	devssl.$O\
 	devtls.$O\
 	devtab.$O\
+	dirread.$O\
 	error.$O\
+	getwd.$O\
 	parse.$O\
 	pgrp.$O\
+	postnote.$O\
 	procinit.$O\
+	notify.$O\
+	rfork.$O\
 	rwlock.$O\
 	sleep.$O\
 	stub.$O\
 	sysfile.$O\
+	time.$O\
 	qio.$O\
 	qlock.$O\
 	term.$O\
+	wait.$O\
 	waserror.$O\
 	$(OS).$O
 

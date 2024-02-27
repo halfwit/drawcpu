@@ -8,6 +8,7 @@
 #undef open
 #undef mount
 #undef read
+#undef fd2path
 #undef write
 #undef seek
 #undef stat
@@ -183,8 +184,8 @@ openmode(ulong o)
 	return o;
 }
 
-long
-_sysfd2path(int fd, char *buf, uint nbuf)
+int
+sysfd2path(int fd, char *buf, int nbuf)
 {
 	Chan *c;
 

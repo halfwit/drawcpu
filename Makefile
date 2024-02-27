@@ -26,7 +26,7 @@ LIBS1=\
 	libip/libip.a\
 
 # stupid gcc
-LIBS=$(LIBS1) $(LIBS1) $(LIBS1) libmachdep.a
+LIBS=$(LIBS1) libmachdep.a
 
 default: $(TARG)
 $(TARG): $(OFILES) $(LIBS)

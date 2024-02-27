@@ -1,9 +1,3 @@
-/*
- * Plan9 is defined for plan 9
- * otherwise its UNIX.
- * Please don't litter the code with ifdefs.  The three below (and one in
- * getflags) should be enough.
- */
 
 #include <u.h>
 #include <libc.h>

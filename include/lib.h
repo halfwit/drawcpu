@@ -66,6 +66,31 @@ enum
 };
 
 /*
+ * one-of-a-kind
+ */
+enum
+{
+	PNPROC		= 1,
+	PNGROUP		= 2,
+};
+
+enum
+{
+	RFNAMEG		= (1<<0),
+	RFENVG		= (1<<1),
+	RFFDG		= (1<<2),
+	RFNOTEG		= (1<<3),
+	RFPROC		= (1<<4),
+	RFMEM		= (1<<5),
+	RFNOWAIT	= (1<<6),
+	RFCNAMEG	= (1<<10),
+	RFCENVG		= (1<<11),
+	RFCFDG		= (1<<12),
+	/*RFREND    - (1<<13),*/
+	/*RFNOMNT     = (1<<14),*/
+};
+
+/*
  * new rune routines
  */
 extern	int	runetochar(char*, Rune*);
@@ -155,6 +180,9 @@ struct Qid
 	uchar	type;
 } Qid;
 
+#define	STATMAX	65535U	/* max length of machine-independent stat structure */
+#define	DIRMAX	(sizeof(Dir)+STATMAX)	/* max length of Dir structure */
+
 typedef
 struct Dir {
 	/* system-modified data */
@@ -176,7 +204,7 @@ typedef
 struct Waitmsg
 {
 	int pid;	/* of loved one */
-	ulong time[3];	/* of loved one & descendants */
+	ulong dur[3];	/* of loved one & descendants */
 	char	*msg;
 } Waitmsg;
 

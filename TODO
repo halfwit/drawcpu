@@ -1,40 +1,44 @@
 NOTES:
-Some builtins will be required **TEST** 
+Some commands we will need to add as builtins to rc
  - 'mount'
- - 'bind'
- - 'auth/factotum'
- - 'auth/secstore'
+ - 'bind', might need a device driver or header-exposed syscall See how bind (2) is coded
+ - 'unmount'
  - 'ns'
- - Can run a command or interactive shell
- - The profile is ran (!!!)
 
 TODO:
- - [ ] have it export a var $service=unix or $service=windows
+ - [ ] Install rcmain properly on system, refer to it as needed
+ - [ ] have it export a var service=unix
  - [ ] Some people probably want aan?
- - [ ] Move rc code to use our libc.h, u.h everywhere so our defs of open + such are correct
+ - [x] Move rc code to use our libc.h, u.h everywhere so our defs of open + such are correct
  - [ ] gui-cocoa try to capture the windows we create so we can send mouse/keyboard to it, plist for launchd
  - [ ] gui-wl cannibalize the wayland shims
- - [ ] handle notes and signals
- - [x] Remove listen1 outright, it's messing everything up.
- - [x] tlssrv, but use internal factotum bits
  - [ ] create namespaces with our bind/mount and allow report via ns(1)
  - [ ] define the gui interface
- - [ ] Makefile librc --> librc.a
- - [ ] move much of io.c and exec.c into our cpu space
-      - It looks like it's mostly broken out into unix.c/plan9.c to where the defs we'd want are and builtins
-      - Could pull in exec.c into the cpu scope instead of where it is, provide pieces into the library or abstracted out? Unsure. 
+ - [x] Makefile librc --> librc.a
+ - [x] libc.h getwd plan9port/src/lib9/getwd.c 
+ - [x] libc.h dirread /sys/src/libc/9sys/dirread.c
+ - [x] libc.h notify plan9port/src/lib9/notify.c
+ - [x] libc.h postnote plan9port/src/lib9/postnote.c
+ - [x] libc.h await plan9port/src/lib9/await.c
+ - [x] libc.h rfork plan9port/src/lib9/rfork.c 
+ - [x] libc.h wait plan9port/src/lib9/wait.c
+ - [x] libc.h time plan9port/src/lib9/time.c
+ - [ ] RFREND + RFNOMEM could probably be handled
 
 Kernel space needs:
- - devdraw, devkbd, devmouse, devaudio - wrong side
- - devcmd - we'll need more insight as to what this really does
- - devcons - needed, console
- - devenv - needed, env vars
- - devfs - needed, local files
- - devip - needed, networking
- - devlfd - I am unsure
- - devmnt - needed, client shares
- - devpipe - probably needed for any pipe
- - devroot - needed, base of stack
- - devssl - needed, ssl
- - devtab - meta, needed
- - devtls - needed! probably before connection even happens, though it may be odd scoping there, we may just need to bind it up just after the accept
+ - devdraw  - #i: !needed, We use the client exported /dev/draw instead
+ - devkbd   - #b: !needed, We use the client exported /dev/kbd instead
+ - devmouse - #m: !needed, We use the client exported /dev/mouse instead
+ - devaudio - #A: !needed, We use the client exported /dev/audio instead
+ - devcmd   - #C: needed OS(1) commands *outside* namespace
+ - devcons  - #c: needed, /dev/cons
+ - devenv   - #e: needed, /dev/env
+ - devfs    - #U: needed, local files
+ - devip    - #I: !needed, networking
+ - devlfd   - #L: !needed
+ - devmnt   - #M: needed, client shares
+ - devpipe  - #|: !needed for pipe in rc
+ - devroot  - #/: needed, base of stack
+ - devssl   - #D: !needed, ssl
+ - devtls   - #a: !needed, tls
+ - devtab   - meta, needed - add/remove any devices that we add/remove, from here as well

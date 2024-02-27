@@ -3,16 +3,20 @@
 #define	chdir	syschdir
 #define	close	sysclose
 #define create	syscreate
-#define dup	sysdup
+#define dup	    sysdup
 #define export	sysexport
+#define getwd   sysgetwd
+#define fd2path sysfd2path
 #define fstat	sysfstat
 #define fwstat	sysfwstat
 #define mount	sysmount
 #define	open	sysopen
 #define read	sysread
 #define remove	sysremove
+#define rfork   sysrfork
 #define seek	sysseek
 #define stat	sysstat
+#define wait    syswait
 #define	write	syswrite
 #define wstat	syswstat
 #define unmount	sysunmount
@@ -34,8 +38,10 @@ extern	int	close(int);
 extern	int	create(char*, int, ulong);
 extern	int	dup(int, int);
 extern  int	export(int);
+extern  int fd2path(int, char*, int);
 extern	int	fstat(int, uchar*, int);
 extern	int	fwstat(int, uchar*, int);
+extern  char* getwd(char *, int);
 extern	int	mount(int, int, char*, int, char*);
 extern	int	unmount(char*, char*);
 extern	int	open(char*, int);
@@ -43,17 +49,19 @@ extern	int	pipe(int*);
 extern	long	read(int, void*, long);
 extern	long	readn(int, void*, long);
 extern	int	remove(char*);
+extern  int rfork(int);
 extern	vlong	seek(int, vlong, int);
 extern	int	stat(char*, uchar*, int);
+extern  long time(long*);
 extern	long	write(int, void*, long);
 extern	int	wstat(char*, uchar*, int);
 extern	void	werrstr(char* ,...);
-
+extern  Waitmsg* wait(void);
 extern	Dir	*dirstat(char*);
 extern	Dir	*dirfstat(int);
 extern	int	dirwstat(char*, Dir*);
 extern	int	dirfwstat(int, Dir*);
-extern	long	dirread(int, Dir*, long);
+extern	long	dirread(int, Dir**);
 extern	ulong	iounit(int);
 
 extern	int	lfdfd(int);
@@ -87,6 +95,8 @@ extern	void	setrealloctag(void*, uintptr);
 extern	int	errstr(char*, uint);
 extern  char *estrdup(char*);
 extern	int	rerrstr(char*, uint);
+extern  int notify(void (*)(void*, char*));
+extern  int noted(int);
 extern	int	encrypt(void*, void*, int);
 extern	int	decrypt(void*, void*, int);
 extern	void	qlock(QLock*);
@@ -100,5 +110,8 @@ extern	int	atexit(void (*)(void));
 extern	void	exits(char*);
 extern	char*	getenv(char*);
 
+extern  int await(char*, int);
+extern  int awaitnohang(char*, int);
+extern  int awaitfor(int, char*, int);
 
 #define IOUNIT			32768	/* default buffer size for 9p io */

@@ -148,10 +148,10 @@ void
 pptr(io *f, void *p)
 {
 	static char hex[] = "0123456789ABCDEF";
-	unsigned long v;
+	uvlong v;
 	int n;
 
-	v = (unsigned long)p;
+	v = (uvlong)p;
 	if(sizeof(v) == sizeof(p) && v>>32)
 		for(n = 60;n>=32;n-=4) pchr(f, hex[(v>>n)&0xF]);
 	for(n = 28;n>=0;n-=4) pchr(f, hex[(v>>n)&0xF]);

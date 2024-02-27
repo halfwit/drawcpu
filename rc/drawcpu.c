@@ -3,24 +3,18 @@
  *	By convention, exported routines herein have names beginning with an
  *	upper case letter.
  */
-
 #include "rc.h"
 #include "exec.h"
 #include "io.h"
 #include "fns.h"
 #include "getflags.h"
 
-#include <signal.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <sys/wait.h>
-
+static void execrfork(void);
 static void execfinit(void);
 
 builtin Builtin[] = {
 	"cd",		execcd,
-	"whatis",	execwhatis,
+	"whatis",	execwhatis, 
 	"eval",		execeval,
 	"exec",		execexec,	/* but with popword first */
 	"exit",		execexit,
@@ -29,14 +23,30 @@ builtin Builtin[] = {
 	".",		execdot,
 	"flag",		execflag,
 	"finit",	execfinit,
+	"rfork",	execrfork,
 	0
 };
 
-// TODO: PREFIX "/lib/rcmain"
-char Rcmain[]="./rc/rcmain.unix";
+char Rcmain[]="/usr/local/lib/rcmain";
 char Fdprefix[]="/dev/fd/";
 
-char *Signame[NSIG];
+char *Signame[] = {
+	"sigexit",	"sighup",	"sigint",	"sigquit",
+	"sigalrm",	"sigkill",	"sigfpe",	"sigterm",
+	0
+};
+
+static char *syssigname[] = {
+	"exit",		/* can't happen */
+	"hangup",
+	"interrupt",
+	"quit",		/* can't happen */
+	"alarm",
+	"kill",
+	"sys: fp: ",
+	"term",
+	0
+};
 
 /*
  * finit could be removed but is kept for
@@ -53,6 +63,61 @@ execfinit(void)
 	runq->lex->qflag = 1;
 }
 
+static void
+execrfork(void)
+{
+	int arg;
+	char *s;
+
+	switch(count(runq->argv->words)){
+	case 1:
+		arg = RFENVG|RFNAMEG|RFNOTEG;
+		break;
+	case 2:
+		arg = 0;
+		for(s = runq->argv->words->next->word;*s;s++) switch(*s){
+		default:
+			goto Usage;
+		case 'n':
+			arg|=RFNAMEG;  break;
+		case 'N':
+			arg|=RFCNAMEG;
+			break;
+		case 'm':
+			/*arg|=RFNOMNT;*/  break;
+		case 'e':
+			arg|=RFENVG;   break;
+		case 'E':
+			arg|=RFCENVG;  break;
+		case 's':
+			arg|=RFNOTEG;  break;
+		case 'f':
+			arg|=RFFDG;    break;
+		case 'F':
+			arg|=RFCFDG;   break;
+		}
+		break;
+	default:
+	Usage:
+		pfmt(err, "Usage: %s [fnesFNEm]\n", runq->argv->words->word);
+		setstatus("rfork usage");
+		poplist();
+		return;
+	}
+	if(rfork(arg)==-1){
+		pfmt(err, "%s: %s failed\n", argv0, runq->argv->words->word);
+		setstatus("rfork failed");
+	} else {
+		if(arg & RFCFDG){
+			redir *rp;
+			for(rp = runq->redir; rp; rp = rp->next)
+				rp->type = 0;
+		}
+		setstatus("");
+	}
+	poplist();
+}
+
 char*
 Env(char *name, int fn)
 {
@@ -66,69 +131,74 @@ Env(char *name, int fn)
 void
 Vinit(void)
 {
-	int fd;
-	DIR *dir;
-	struct dirent *ent;
+	int dir, fd, i, n;
+	Dir *ent;
 
-	dir = opendir("/env");
-	if(dir == nil){
+	dir = Open(Env("", 0), 0);
+	if(dir<0){
 		pfmt(err, "%s: can't open: %s\n", argv0, Errstr());
 		return;
 	}
 	for(;;){
-		ent = readdir(dir);
-		if (ent == nil)
+		ent = 0;
+		n = dirread(dir, &ent);
+		if(n <= 0)
 			break;
-		if(ent->d_namlen<=0 || strncmp(ent->d_name, "fn#", 3)==0)
-			continue;
-		if((fd = Open(Env(ent->d_name, 0), 0))>=0){
-			io *f = openiofd(fd);
-			word *w = 0, **wp = &w;
-			char *s;
-			while((s = rstr(f, "")) != 0){
-				*wp = Newword(s, (word*)0);
-				wp = &(*wp)->next;
+		for(i = 0; i<n; i++){
+			if(ent[i].length<=0 || strncmp(ent[i].name, "fn#", 3)==0)
+				continue;
+			if((fd = Open(Env(ent[i].name, 0), 0))>=0){
+				io *f = openiofd(fd);
+				word *w = 0, **wp = &w;
+				char *s;
+				while((s = rstr(f, "")) != 0){
+					*wp = Newword(s, (word*)0);
+					wp = &(*wp)->next;
+				}
+				closeio(f);
+				setvar(ent[i].name, w);
+				vlook(ent[i].name)->changed = 0;
 			}
-			closeio(f);
-			setvar(ent->d_name, w);
-			vlook(ent->d_name)->changed = 0;
 		}
 		free(ent);
 	}
-	closedir(dir);
+	Close(dir);
 }
 
 char*
 Errstr(void)
 {
-	return strerror(errno);
+	static char err[ERRMAX];
+	rerrstr(err, sizeof err);
+	return err;
 }
 
-/* Can we do this inside the kernel? */
 int
 Waitfor(int pid)
 {
 	thread *p;
-	char num[12];
-	int wpid, status;
+	Waitmsg *w;
 
 	if(pid >= 0 && !havewaitpid(pid))
 		return 0;
-	while((wpid = wait(&status))!=-1){
-		delwaitpid(wpid);
-		inttoascii(num, WIFSIGNALED(status)?WTERMSIG(status)+1000:WEXITSTATUS(status));
-		if(wpid==pid){
-			setstatus(num);
+
+	while((w = wait()) != nil){
+		delwaitpid(w->pid);
+		if(w->pid==pid){
+			setstatus(w->msg);
+			free(w);
 			return 0;
 		}
 		for(p = runq->ret;p;p = p->ret)
-			if(p->pid==wpid){
+			if(p->pid==w->pid){
 				p->pid=-1;
-				p->status = estrdup(num);
+				p->status = estrdup(w->msg);
 				break;
 			}
+		free(w);
 	}
-	if(errno==EINTR) return -1;
+
+	if(strcmp(Errstr(), "interrupted")==0) return -1;
 	return 0;
 }
 
@@ -192,95 +262,112 @@ Updenv(void)
 void
 Exec(char **argv)
 {
-	// TODO: execve after loading env to string
-	execv(argv[0], argv+1);
+	execvp(argv[0], argv+1);
 }
 
 int
 Fork(void)
 {
 	Updenv();
-	return fork();
+	// TODO: Tie into the rendezvous so we can block 'em in rfork
+	return rfork(RFPROC|RFFDG/*|RFREND*/);
 }
+
+
+typedef struct readdir readdir;
+struct readdir {
+	Dir	*dbuf;
+	int	i, n;
+	int	fd;
+};
 
 void*
 Opendir(char *name)
 {
-	return opendir(name);
+	readdir *rd;
+	int fd;
+	if((fd = Open(name, 0))<0)
+		return 0;
+	rd = new(readdir);
+	rd->dbuf = 0;
+	rd->i = 0;
+	rd->n = 0;
+	rd->fd = fd;
+	return rd;
+}
+
+static int
+trimdirs(Dir *d, int nd)
+{
+	int r, w;
+
+	for(r=w=0; r<nd; r++)
+		if(d[r].mode&DMDIR)
+			d[w++] = d[r];
+	return w;
 }
 
 char*
 Readdir(void *arg, int onlydirs)
 {
-	DIR *rd = arg;
-	struct dirent *ent = readdir(rd);
-	if(ent == NULL)
+	readdir *rd = arg;
+	int n;
+Again:
+	if(rd->i>=rd->n){	/* read */
+		free(rd->dbuf);
+		rd->dbuf = 0;
+		n = dirread(rd->fd, &rd->dbuf);
+		if(n>0){
+			if(onlydirs){
+				n = trimdirs(rd->dbuf, n);
+				if(n == 0)
+					goto Again;
+			}	
+			rd->n = n;
+		}else
+			rd->n = 0;
+		rd->i = 0;
+	}
+	if(rd->i>=rd->n)
 		return 0;
-	return ent->d_name;
+	return rd->dbuf[rd->i++].name;
 }
 
 void
 Closedir(void *arg)
 {
-	DIR *rd = arg;
-	closedir(rd);
+	readdir *rd = arg;
+	Close(rd->fd);
+	free(rd->dbuf);
+	free(rd);
 }
+
+static int interrupted = 0;
 
 static void
-sighandler(int sig)
-{
-	trap[sig]++;
-	ntrap++;
-}
-
-// TODO: Use kernel sighandling 
-void
-Trapinit(void)
+notifyf(void* u, char *s)
 {
 	int i;
 
-	Signame[0] = "sigexit";
-
-#ifdef SIGINT
-	Signame[SIGINT] = "sigint";
-#endif
-#ifdef SIGTERM
-	Signame[SIGTERM] = "sigterm";
-#endif
-#ifdef SIGHUP
-	Signame[SIGHUP] = "sighup";
-#endif
-#ifdef SIGQUIT
-	Signame[SIGQUIT] = "sigquit";
-#endif
-#ifdef SIGPIPE
-	Signame[SIGPIPE] = "sigpipe";
-#endif
-#ifdef SIGUSR1
-	Signame[SIGUSR1] = "sigusr1";
-#endif
-#ifdef SIGUSR2
-	Signame[SIGUSR2] = "sigusr2";
-#endif
-#ifdef SIGBUS
-	Signame[SIGBUS] = "sigbus";
-#endif
-#ifdef SIGWINCH
-	Signame[SIGWINCH] = "sigwinch";
-#endif
-
-	for(i=1; i<NSIG; i++) if(Signame[i]){
-#ifdef SA_RESTART
-		struct sigaction a;
-
-		sigaction(i, NULL, &a);
-		a.sa_flags &= ~SA_RESTART;
-		a.sa_handler = sighandler;
-		sigaction(i, &a, NULL);
-#else
-		signal(i, sighandler);
-#endif
+	USED(u);
+	for(i = 0;syssigname[i];i++) if(strncmp(s, syssigname[i], strlen(syssigname[i]))==0){
+		if(strncmp(s, "sys: ", 5)!=0) interrupted = 1;
+		goto Out;
 	}
+	noted(NDFLT);
+	return;
+Out:
+	if(strcmp(s, "interrupt")!=0 || trap[i]==0){
+		trap[i]++;
+		ntrap++;
+	}
+	noted(NCONT);
+}
+
+void
+Trapinit(void)
+{
+	notify(notifyf);
 }
 
 long
@@ -356,13 +443,19 @@ Exit(void)
 void
 Noerror(void)
 {
-	errno = 0;
+	interrupted = 0;
 }
 
 int
 Isatty(int fd)
 {
 	return isatty(fd);
+	/*
+	char buf[64];
+	if(fd2path(fd, buf, sizeof buf) != 0)
+		return 0;
+	return strlen(buf) >= 9 && strcmp(buf+strlen(buf)-9, "/dev/cons") == 0;
+	*/
 }
 
 void
@@ -371,9 +464,12 @@ Abort(void)
 	abort();
 }
 
+static int newwdir;
+
 int
 Chdir(char *dir)
 {
+	newwdir = 1;
 	return chdir(dir);
 }
 
@@ -382,4 +478,15 @@ Prompt(char *s)
 {
 	pstr(err, s);
 	flushio(err);
+
+	if(newwdir){
+		char dir[4096];
+		int fd;
+		if((fd=Creat("/dev/wdir"))>=0){
+			getwd(dir, sizeof(dir));
+			Write(fd, dir, strlen(dir));
+			Close(fd);
+		}
+		newwdir = 0;
+	}
 }

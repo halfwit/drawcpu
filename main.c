@@ -44,8 +44,6 @@ estrdup(char *s)
 int
 main(int argc, char **argv)
 {
-	int fd;
-	char s[1024];
 	extern ulong kerndate;
 	kerndate = seconds();
 	eve = getuser();
@@ -65,30 +63,18 @@ main(int argc, char **argv)
 		panic("bind #c: %r");
 	if(bind("#e", "/env", MREPL|MCREATE) < 0)
 		panic("bind #e: %r");
-	if(bind("#I", "/net", MBEFORE) < 0)
-		panic("bind #I: %r");
 	if(bind("#U", "/root", MREPL) < 0)
 		panic("bind #U: %r");
-	bind("#A", "/dev", MAFTER);
-	bind("#N", "/dev", MAFTER);
-	bind("#C", "/", MAFTER);
-
     if(bind("/root", "/", MAFTER) < 0)
 		panic("bind /root: %r");
 
-	if((fd = open("/dev/cons", OREAD)) < 0)
-		panic("open stdin: %r");
-	if(read(fd, s, sizeof s) <= 0)
-		panic("read: %r");
-	close(fd);
-
+	// We get service=cpu, change to =unix
 	char *cmd[] = {
-		"/bin/rc",
-		"-c",
-		s
+		"drawcpu",
+		"-c"
+		". <{n=`{read} && ! ~ $#n 0 && read -c $n} >[2=1]"	
 	};
 
-	printf("%s %s %s\n", cmd[0], cmd[1], cmd[2]);
 	runcommand(3, cmd);
 	_exit(0);
 }

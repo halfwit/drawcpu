@@ -24,11 +24,17 @@ builtin Builtin[] = {
 	"flag",		execflag,
 	"finit",	execfinit,
 	"rfork",	execrfork,
+	"read",     execread,
+	"ns",       execns,
+	"bind",		execbind,
+	"mount",	execmount,
+	"unmount",	execunmount,
 	0
 };
 
+/* TODO: Set rcmain in .make  */
 char Rcmain[]="/usr/local/lib/rcmain";
-char Fdprefix[]="/dev/fd/";
+char Fdprefix[]="/fd/";
 
 char *Signame[] = {
 	"sigexit",	"sighup",	"sigint",	"sigquit",

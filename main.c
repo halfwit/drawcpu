@@ -67,8 +67,6 @@ main(int argc, char **argv)
 		panic("bind #U: %r");
     if(bind("/root", "/", MAFTER) < 0)
 		panic("bind /root: %r");
-
-	// We get service=cpu, change to =unix
 	char *cmd[] = {
 		"drawcpu",
 		"-c"

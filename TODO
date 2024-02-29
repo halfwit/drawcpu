@@ -1,9 +1,10 @@
-NOTES:
-Some commands we will need to add as builtins to rc
- - 'mount'
- - 'bind', might need a device driver or header-exposed syscall See how bind (2) is coded
- - 'unmount'
- - 'ns'
+BUILTINS:
+ - [x]' read' ?
+ - [x] 'write' ?
+ - [x] 'mount'
+ - [x] 'bind', might need a device driver or header-exposed syscall See how bind (2) is coded
+ - [ ] 'unmount'
+ - [ ] 'ns'
 
 TODO:
  - [ ] Install rcmain properly on system, refer to it as needed
@@ -14,6 +15,7 @@ TODO:
  - [ ] gui-wl cannibalize the wayland shims
  - [ ] create namespaces with our bind/mount and allow report via ns(1)
  - [ ] define the gui interface
+ - [ ] make sure we chroot programs so the stdio and opens are correctly sent to our kernel devices
  - [x] Makefile librc --> librc.a
  - [x] libc.h getwd plan9port/src/lib9/getwd.c 
  - [x] libc.h dirread /sys/src/libc/9sys/dirread.c
@@ -41,4 +43,5 @@ Kernel space needs:
  - devroot  - #/: needed, base of stack
  - devssl   - #D: !needed, ssl
  - devtls   - #a: !needed, tls
+ - devfd    - #f: needed, host fds in our kernelspace
  - devtab   - meta, needed - add/remove any devices that we add/remove, from here as well

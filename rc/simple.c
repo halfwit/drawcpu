@@ -170,8 +170,268 @@ mkargv(word *a)
 }
 
 void
+chars(int fd, int multi, vlong count, char *file)
+{
+	char buf[8*1024];
+	vlong m;
+	int n;
+
+	for(m = 0; m < count; m += n){
+		n = sizeof(buf);
+		if(n > (count - m))
+			n = count - m;
+		if((n = read(fd, buf, n)) < 0){
+			fprint(2, "read: error reading %s: %r\n", file);
+			exits("read error");
+		}
+		if(n == 0){
+			if(m == 0)
+				setstatus("eof");
+			break;
+		}
+		write(1, buf, n);
+	}
+}
+
+int
+line(int fd, char *file)
+{
+	char c;
+	int m, n, nalloc;
+	char *buf;
+
+	nalloc = 0;
+	buf = nil;
+	for(m=0; ; ){
+		n = read(fd, &c, 1);
+		if(n < 0){
+			fprint(2, "read: error reading %s: %r\n", file);
+			exits("read error");
+		}
+		if(n == 0){
+			if(m == 0)
+				setstatus("eof");
+			break;
+		}
+		if(m == nalloc){
+			nalloc += 1024;
+			buf = realloc(buf, nalloc);
+			if(buf == nil){
+				fprint(2, "read: malloc error: %r\n");
+				exits("malloc");
+			}
+		}
+		buf[m++] = c;
+		if(c == '\n')
+			break;
+	}
+	if(m > 0)
+		write(1, buf, m);
+	free(buf);
+	return m;
+}
+
+void
+lines(int fd, int multi, vlong count, char *file)
+{
+	do{
+		if(line(fd, file) == 0)
+			break;
+	}while(multi || --count > 0);
+}
+
+void
+execread(void)
+{
+//	print("Execread\n");
+	void (*proc)(int, int, vlong, char*);
+	word *a;
+	int fd, multi = 0;
+	vlong num = 0;
+	popword(); /* "read" */
+	proc = lines;
+	while(runq->argv->words && runq->argv->words->word[0]=='-'){
+		char *f = runq->argv->words->word+1;
+		if(*f == '-'){
+			popword();
+			break;
+		}
+		proc = lines;
+		for(; *f; f++){
+			switch(*f){
+			case 'c':
+				num = atoll(runq->argv->words->next->word);
+				proc = chars;
+				break;
+			case 'n':
+				num = atoi(runq->argv->words->next->word);
+				break;
+			case 'm':
+				multi = 1;
+				break;
+			default:
+				pfmt(err, "Usage: read [ -m | -n nlines | -c nbytes | -r nrunes ] [ file ... ]\n");
+				setstatus("read usage");
+				poplist();
+				return;
+			}
+		}
+		popword();
+	}
+	if(count(runq->argv->words)==0){
+		(*proc)(0, multi, num, "<stdin>");
+	} else {
+		a = runq->argv->words->next;
+		for(;a;a = a->next){
+			fd = open(a->word, OREAD);
+			if(fd < 0){
+				fprint(2, "read: can't open %s: %r\n", a->word);
+				exits("open");
+			}
+			(*proc)(fd, multi, num, a->word);
+			close(fd);
+		}
+	}
+}
+
+void
+execns(void)
+{
+//print("Execns\n");
+}
+
+void
+execbind(void)
+{
+//print("Execbind\n");
+	ulong flag;
+	int qflag = 0;
+	popword(); /* "bind" */
+	while(runq->argv->words && runq->argv->words->word[0]=='-'){
+		char *f = runq->argv->words->word+1;
+		if(*f == '-'){
+			popword();
+			break;
+		}
+		for(; *f; f++){
+			switch(*f){
+			case 'a':
+				flag |= MAFTER;
+				break;
+			case 'b':
+				flag |= MBEFORE;
+				break;
+			case 'c':
+				flag |= MCREATE;
+				break;
+			case 'q':
+				qflag = 1;
+				break;
+			default:
+				goto Usage;
+			}
+		}
+		popword();
+	}
+	if(count(runq->argv->words)!=2 || (flag&MAFTER)&&(flag&MBEFORE)){
+		goto Usage;
+	}
+	if(bind(runq->argv->words->word, runq->argv->words->next->word, flag) == -1){
+		if(qflag)
+			return;
+		Xerror1("bind error");
+	}
+	return;
+Usage:
+	Xerror1("usage: bind [-b|-a|-c|-bc|-ac] new old");
+	return;
+}
+
+void
+catch(void *, char *m)
+{
+	pfmt(err, "%s: %s\n", argv0, m);
+}
+
+void
+execmount(void)
+{
+//print("Execmount\n");
+	char *spec = "";
+	int flag = MREPL;
+	int qflag, noauth, fd;
+	qflag = noauth = 0;
+
+	popword(); /* mount */
+	while(runq->argv->words && runq->argv->words->word[0]=='-'){
+		char *f = runq->argv->words->word+1;
+		if(*f == '-'){
+			popword();
+			break;
+		}
+		for(; *f; f++){
+			switch(*f){
+			case 'a':
+				flag |= MAFTER;
+				break;
+			case 'b':
+				flag |= MBEFORE;
+				break;
+			case 'c':
+				flag |= MCREATE;
+				break;
+			case 'C':
+				flag |= MCACHE;
+				break;
+			case 'n':
+				noauth = 1;
+				break;
+			case 'q':
+				qflag = 1;
+				break;
+			default:
+				goto Usage;
+			}
+		}
+		popword();
+	}
+	if(count(runq->argv->words)==3)
+		spec = runq->argv->words->next->next->word;
+	else if(count(runq->argv->words)!=2)
+		goto Usage;
+	if((flag&MAFTER)&&(flag&MBEFORE))
+		goto Usage;
+	fd = Open(runq->argv->words->word, ORDWR);
+	if(fd < 0){
+		if(qflag)
+			return;
+		pfmt(err, "mount: can't open %s\n", runq->argv->words->word);
+		return;
+	}
+	notify(catch);
+	if(sysmount(fd, -1, runq->argv->words->next->word, flag, spec) < 0){
+		if(qflag)
+			return;
+		pfmt(err, "mount: %r\n");
+		setstatus("mount error");
+		poplist();
+	}
+	return;
+Usage:
+	Xerror1("usage: mount [-a|-b] [-cCnNq] [-k keypattern] /srv/service dir [spec]");
+	return;
+}
+
+void
+execunmount(void)
+{
+	//unmount
+}
+
+void
 execexec(void)
 {
+//	print("Execexec\n");
 	char **argv;
 	word *path;
 
@@ -196,6 +456,7 @@ execexec(void)
 void
 execfunc(var *func)
 {
+//	print("Execfunc\n");
 	popword();	/* name */
 	startfunc(func, Poplist(), runq->local, runq->redir);
 }
@@ -206,7 +467,7 @@ execcd(void)
 	word *a = runq->argv->words;
 	word *cdpath;
 	char *dir;
-
+//	print("Execcd\n");
 	setstatus("can't cd");
 	switch(count(a)){
 	default:
@@ -246,6 +507,7 @@ execcd(void)
 void
 execexit(void)
 {
+//	print("Execexit\n");
 	switch(count(runq->argv->words)){
 	default:
 		pfmt(err, "Usage: exit [status]\nExiting anyway\n");
@@ -261,6 +523,7 @@ execshift(void)
 	int n;
 	word *a;
 	var *star;
+//	print("execshift\n");
 	switch(count(runq->argv->words)){
 	default:
 		pfmt(err, "Usage: shift [n]\n");
@@ -309,7 +572,7 @@ void
 execcmds(io *input, char *file, var *local, redir *redir)
 {
 	static union code rdcmds[5];
-
+//	print("Execcmds\n");
 	if(rdcmds[0].i==0){
 		rdcmds[0].i = 1;
 		rdcmds[1].s="*rdcmds*";
@@ -330,7 +593,7 @@ execeval(void)
 	char *cmds;
 	int len;
 	io *f;
-
+//print("Execeval\n");
 	popword();	/* "eval" */
 
 	if(runq->argv->words==0){
@@ -356,7 +619,7 @@ execdot(void)
 	int fd, bflag, iflag, qflag;
 	word *path, *argv;
 	char *file;
-
+//print("Execdot\n");
 	popword();	/* "." */
 
 	bflag = iflag = qflag = 0;
@@ -398,7 +661,7 @@ Usage:
 		fd = Open(file, 0);
 		if(fd >= 0)
 			break;
-		if(strcmp(file, "/dev/stdin")==0){	/* for sun & ucb */
+		if(strcmp(file, "/fd/0")==0){
 			fd = open("/dev/cons", OREAD);
 		}
 		free(file);
@@ -431,6 +694,7 @@ Usage:
 void
 execflag(void)
 {
+//	print("Execflag\n");
 	char *letter, *val;
 	switch(count(runq->argv->words)){
 	case 2:
@@ -466,6 +730,7 @@ execwhatis(void){	/* mildly wrong -- should fork before writing */
 	io *out;
 	int found, sep;
 	a = runq->argv->words->next;
+//	print("Execwhatis\n");
 	if(a==0){
 		Xerror1("Usage: whatis name ...");
 		return;
@@ -521,6 +786,7 @@ execwhatis(void){	/* mildly wrong -- should fork before writing */
 void
 execwait(void)
 {
+//	print("Execwait\n");
 	switch(count(runq->argv->words)){
 	default:
 		Xerror1("Usage: wait [pid]");

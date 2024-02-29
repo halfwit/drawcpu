@@ -74,11 +74,14 @@ struct builtin{
 };
 extern void (*builtinfunc(char *name))(void);
 
+void execread(void), execns(void);
+void execbind(void), execmount(void), execunmount(void);
 void execcd(void), execwhatis(void), execeval(void), execexec(void);
 int execforkexec(void);
 void execexit(void), execshift(void);
 void execwait(void), execumask(void), execdot(void), execflag(void);
 void execfunc(var*), execcmds(io*, char*, var*, redir*);
+
 void startfunc(var*, word*, var*, redir*);
 
 char *srcfile(thread*);

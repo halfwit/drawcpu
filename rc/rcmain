@@ -29,9 +29,9 @@ if not if(flag i){
 	}
 	status=''
 	if(! ~ $#* 0) . $*
-	. -i /dev/fd/0
+	. -i /fd/0
 }
-if not if(~ $#* 0) . /dev/fd/0
+if not if(~ $#* 0) . /fd/0
 if not{
 	status=''
 	. $*

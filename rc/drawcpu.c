@@ -29,6 +29,7 @@ builtin Builtin[] = {
 	"bind",		execbind,
 	"mount",	execmount,
 	"unmount",	execunmount,
+	"ls", 		execls,
 	0
 };
 

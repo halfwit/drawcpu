@@ -1,8 +1,11 @@
 BUILTINS:
- - [x]' read' ?
- - [x] 'write' ?
+ - [x]' read'
+ - [ ] 'write' ?
+ - [x] 'ls'
  - [x] 'mount'
- - [x] 'bind', might need a device driver or header-exposed syscall See how bind (2) is coded
+ - [x] 'bind'
+ - [ ] 'mkdir'
+ - [ ] 'rm'
  - [ ] 'unmount'
  - [ ] 'ns'
 
@@ -13,9 +16,7 @@ TODO:
  - [x] Move rc code to use our libc.h, u.h everywhere so our defs of open + such are correct
  - [ ] gui-cocoa try to capture the windows we create so we can send mouse/keyboard to it, plist for launchd
  - [ ] gui-wl cannibalize the wayland shims
- - [ ] create namespaces with our bind/mount and allow report via ns(1)
  - [ ] define the gui interface
- - [ ] make sure we chroot programs so the stdio and opens are correctly sent to our kernel devices
  - [x] Makefile librc --> librc.a
  - [x] libc.h getwd plan9port/src/lib9/getwd.c 
  - [x] libc.h dirread /sys/src/libc/9sys/dirread.c
@@ -32,16 +33,15 @@ Kernel space needs:
  - devkbd   - #b: !needed, We use the client exported /dev/kbd instead
  - devmouse - #m: !needed, We use the client exported /dev/mouse instead
  - devaudio - #A: !needed, We use the client exported /dev/audio instead
- - devcmd   - #C: needed OS(1) commands *outside* namespace
+ - devcmd   - #C: !needed OS(1) commands, we already run on host
  - devcons  - #c: needed, /dev/cons
  - devenv   - #e: needed, /dev/env
  - devfs    - #U: needed, local files
  - devip    - #I: !needed, networking
  - devlfd   - #L: !needed
  - devmnt   - #M: needed, client shares
- - devpipe  - #|: !needed for pipe in rc
+ - devpipe  - #|: ?needed for pipe in rc
  - devroot  - #/: needed, base of stack
  - devssl   - #D: !needed, ssl
  - devtls   - #a: !needed, tls
- - devfd    - #f: needed, host fds in our kernelspace
  - devtab   - meta, needed - add/remove any devices that we add/remove, from here as well

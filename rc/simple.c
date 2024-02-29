@@ -169,7 +169,7 @@ mkargv(word *a)
 	return argv;
 }
 
-void
+int
 chars(int fd, int multi, vlong count, char *file)
 {
 	char buf[8*1024];
@@ -181,8 +181,7 @@ chars(int fd, int multi, vlong count, char *file)
 		if(n > (count - m))
 			n = count - m;
 		if((n = read(fd, buf, n)) < 0){
-			fprint(2, "read: error reading %s: %r\n", file);
-			exits("read error");
+			return -1;
 		}
 		if(n == 0){
 			if(m == 0)
@@ -191,6 +190,7 @@ chars(int fd, int multi, vlong count, char *file)
 		}
 		write(1, buf, n);
 	}
+	return 0;
 }
 
 int
@@ -205,8 +205,7 @@ line(int fd, char *file)
 	for(m=0; ; ){
 		n = read(fd, &c, 1);
 		if(n < 0){
-			fprint(2, "read: error reading %s: %r\n", file);
-			exits("read error");
+			return -1;
 		}
 		if(n == 0){
 			if(m == 0)
@@ -217,8 +216,7 @@ line(int fd, char *file)
 			nalloc += 1024;
 			buf = realloc(buf, nalloc);
 			if(buf == nil){
-				fprint(2, "read: malloc error: %r\n");
-				exits("malloc");
+				return -1;
 			}
 		}
 		buf[m++] = c;
@@ -231,20 +229,22 @@ line(int fd, char *file)
 	return m;
 }
 
-void
+int
 lines(int fd, int multi, vlong count, char *file)
 {
+	int n;
 	do{
-		if(line(fd, file) == 0)
+		if((n = line(fd, file)) <= 0)
 			break;
 	}while(multi || --count > 0);
+	return n;
 }
 
 void
 execread(void)
 {
 //	print("Execread\n");
-	void (*proc)(int, int, vlong, char*);
+	int (*proc)(int, int, vlong, char*);
 	word *a;
 	int fd, multi = 0;
 	vlong num = 0;
@@ -270,13 +270,10 @@ execread(void)
 				multi = 1;
 				break;
 			default:
-				pfmt(err, "Usage: read [ -m | -n nlines | -c nbytes | -r nrunes ] [ file ... ]\n");
-				setstatus("read usage");
-				poplist();
-				return;
+				goto Usage;
 			}
+			popword();
 		}
-		popword();
 	}
 	if(count(runq->argv->words)==0){
 		(*proc)(0, multi, num, "<stdin>");
@@ -285,13 +282,23 @@ execread(void)
 		for(;a;a = a->next){
 			fd = open(a->word, OREAD);
 			if(fd < 0){
-				fprint(2, "read: can't open %s: %r\n", a->word);
-				exits("open");
+				goto Error;
 			}
-			(*proc)(fd, multi, num, a->word);
+			if((*proc)(fd, multi, num, a->word) < 0)
+				goto Error;
 			close(fd);
 		}
 	}
+	return;
+Error:
+	pfmt(err, "read: %s\n", strerror(errno));
+	setstatus("read error");
+	poplist();
+	return;
+Usage:
+	pfmt(err, "Usage: read [ -m | -n nlines | -c nbytes | -r nrunes ] [ file ... ]\n");
+	setstatus("read usage");
+	poplist();
 }
 
 void
@@ -304,7 +311,7 @@ void
 execbind(void)
 {
 //print("Execbind\n");
-	ulong flag;
+	ulong flag = 0;
 	int qflag = 0;
 	popword(); /* "bind" */
 	while(runq->argv->words && runq->argv->words->word[0]=='-'){
@@ -330,27 +337,26 @@ execbind(void)
 			default:
 				goto Usage;
 			}
+			popword();
 		}
-		popword();
 	}
-	if(count(runq->argv->words)!=2 || (flag&MAFTER)&&(flag&MBEFORE)){
+	if(count(runq->argv->words)!=2 || (flag&MAFTER)&&(flag&MBEFORE))
 		goto Usage;
-	}
-	if(bind(runq->argv->words->word, runq->argv->words->next->word, flag) == -1){
-		if(qflag)
-			return;
-		Xerror1("bind error");
-	}
+	if(bind(runq->argv->words->word, runq->argv->words->next->word, flag) == -1)
+		goto Error;
+	return;
+Error:
+	setstatus("bind error");
+	poplist();
+	if(qflag)
+		return;
+	pfmt(err, "bind: %s\n", strerror(errno));
 	return;
 Usage:
-	Xerror1("usage: bind [-b|-a|-c|-bc|-ac] new old");
+	pfmt(err, "usage: bind [-b|-a|-c|-bc|-ac] new old\n");
+	setstatus("bind usage");
+	poplist();
 	return;
-}
-
-void
-catch(void *, char *m)
-{
-	pfmt(err, "%s: %s\n", argv0, m);
 }
 
 void
@@ -392,8 +398,8 @@ execmount(void)
 			default:
 				goto Usage;
 			}
+			popword();
 		}
-		popword();
 	}
 	if(count(runq->argv->words)==3)
 		spec = runq->argv->words->next->next->word;
@@ -402,23 +408,21 @@ execmount(void)
 	if((flag&MAFTER)&&(flag&MBEFORE))
 		goto Usage;
 	fd = Open(runq->argv->words->word, ORDWR);
-	if(fd < 0){
-		if(qflag)
-			return;
-		pfmt(err, "mount: can't open %s\n", runq->argv->words->word);
+	if(fd < 0)
+		goto Error;
+	if(sysmount(fd, -1, runq->argv->words->next->word, flag, spec) < 0)
+		goto Error;
+	return;
+Error:
+	setstatus("mount error");
+	poplist();
+	if(qflag)
 		return;
-	}
-	notify(catch);
-	if(sysmount(fd, -1, runq->argv->words->next->word, flag, spec) < 0){
-		if(qflag)
-			return;
-		pfmt(err, "mount: %r\n");
-		setstatus("mount error");
-		poplist();
-	}
+	pfmt(err, "mount: %s\n", strerror(errno));
 	return;
 Usage:
-	Xerror1("usage: mount [-a|-b] [-cCnNq] [-k keypattern] /srv/service dir [spec]");
+	pfmt(err, "usage: mount [-a|-b] [-cCnNq] [-k keypattern] /srv/service dir [spec]\n");
+	setstatus("mount usage");
 	return;
 }
 
@@ -426,6 +430,55 @@ void
 execunmount(void)
 {
 	//unmount
+}
+
+void
+execls(void)
+{
+	Dir *db;
+	int fd, n, i;
+	char *path;
+
+	/* Read in our dir and just output name in a row */
+	popword(); /* "ls" */
+	switch(count(runq->argv->words)){
+	case 0:
+		path = ".";
+		break;
+	case 1:
+		path = runq->argv->words->word;
+		break;
+	default:
+		pfmt(err, "ls: listing multiple files not supported\n");
+		return;
+	}
+	db = dirstat(path);
+	if(db == nil)
+		goto Error;
+	if((db->qid.type&QTDIR)) {
+		free(db);
+		fd = open(path, OREAD);
+		if(fd == -1)
+			goto Error;
+		n = dirreadall(fd, &db);
+		if(n < 0)
+			goto Error;
+		for(i = 0; i < n; i++){
+			write(1, db->name, strlen(db->name));
+			write(1, "\n", 1);
+			db++;
+		}
+		close(fd);
+	} else {
+		write(1, db->name, strlen(db->name));
+		write(1, "\n", 1);
+	}
+	return;
+Error:
+	pfmt(err, "ls: %sr\n", strerror(errno));
+	setstatus("ls error");
+	poplist();
+	return;
 }
 
 void

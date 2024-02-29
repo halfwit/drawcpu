@@ -62,6 +62,7 @@ extern	Dir	*dirfstat(int);
 extern	int	dirwstat(char*, Dir*);
 extern	int	dirfwstat(int, Dir*);
 extern	long	dirread(int, Dir**);
+extern  long    dirreadall(int, Dir**);
 extern	ulong	iounit(int);
 
 extern	int	lfdfd(int);

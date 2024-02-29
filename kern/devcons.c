@@ -6,8 +6,6 @@
 
 #include 	"keyboard.h"
 
-#include	<authsrv.h>
-
 #undef write
 #undef read
 
@@ -365,7 +363,7 @@ static Dirtab consdir[]={
 	"cons",		{Qcons},	0,		0660,
 	"consctl",	{Qconsctl},	0,		0220,
 	"drivers",	{Qdrivers},	0,		0444,
-	"hostdomain",	{Qhostdomain},	DOMLEN,		0664,
+	"hostdomain",	{Qhostdomain},	48,		0664,
 	"hostowner",	{Qhostowner},	0,	0664,
 	"kmesg",	{Qkmesg},	0,		0440,
 	"kprint",	{Qkprint, 0, QTEXCL},	0,	DMEXCL|0440,

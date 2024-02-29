@@ -1,10 +1,4 @@
-extern int havesecstore(char *addr, char *owner);
-extern char *secstore;
-extern char *secstorefetch(char *addr, char *owner, char *passwd);
-extern char *authserver;
-extern int exportfs(int, int);
 extern void runcommand(int, char**);
-extern int dialfactotum(void);
 extern char *getuser(void);
 extern int session(void);
 extern int aanclient(char*, int);

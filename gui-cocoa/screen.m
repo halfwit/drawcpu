@@ -71,6 +71,7 @@ guimain(void)
 void
 screeninit(void)
 {
+	/*
 	memimageinit();
 	NSSize s = [myview convertSizeToBacking:myview.frame.size];
 	screensize(Rect(0, 0, s.width, s.height), ARGB32);
@@ -79,6 +80,7 @@ screeninit(void)
 	terminit();
 	readybit = 1;
 	wakeup(&rend);
+	*/
 }
 
 void
@@ -201,6 +203,7 @@ setcolor(ulong i, ulong r, ulong g, ulong b)
 void
 setcursor(void)
 {
+	/*
 	static unsigned char data[64], data2[256];
 	unsigned char *planes[2] = {&data[0], &data[32]};
 	unsigned char *planes2[2] = {&data2[0], &data2[128]};
@@ -274,11 +277,13 @@ setcursor(void)
 	dispatch_async(dispatch_get_main_queue(), ^(void){
 		[[myview window] invalidateCursorRectsForView:myview];
 	});
+	*/
 }
 
 void
 mouseset(Point p)
 {
+	/*
 	dispatch_async(dispatch_get_main_queue(), ^(void){@autoreleasepool{
 		NSPoint s;
 
@@ -297,6 +302,7 @@ mouseset(Point p)
 			CGAssociateMouseAndMouseCursorPosition(true);
 		}
 	}});
+	*/
 }
 
 @implementation AppDelegate
@@ -376,9 +382,11 @@ mainproc(void *aux)
 
 - (void) windowDidBecomeKey:(id)arg
 {
+	/*
 	NSPoint p;
 	p = [_window convertPointToBacking:[_window mouseLocationOutsideOfEventStream]];
 	absmousetrack(p.x, [myview convertSizeToBacking:myview.frame.size].height - p.y, 0, ticks());
+	*/
 }
 
 - (void) windowDidResignKey:(id)arg
@@ -525,6 +533,7 @@ evkey(uint v)
 }
 
 - (void)flagsChanged:(NSEvent*)event {
+	/*
 	NSEventModifierFlags x;
 	NSUInteger u;
 
@@ -571,9 +580,11 @@ evkey(uint v)
 	if((~x & _mods & NSEventModifierFlagCapsLock) != 0)
 		kbdkey(Kcaps, 0);
 	_mods = x;
+	*/
 }
 
 - (void) clearMods {
+	/*
 	if((_mods & NSEventModifierFlagShift) != 0){
 		kbdkey(Kshift, 0);
 		_mods ^= NSEventModifierFlagShift;
@@ -586,10 +597,12 @@ evkey(uint v)
 		kbdkey(Kalt, 0);
 		_mods ^= NSEventModifierFlagOption;
 	}
+	*/
 }
 
 - (void) mouseevent:(NSEvent*)event
 {
+	/*
 	NSPoint p;
 	Point q;
 	NSUInteger u;
@@ -609,16 +622,19 @@ evkey(uint v)
 		}else if(m & NSEventModifierFlagCommand)
 			u = 4;
 	}
-	absmousetrack(p.x, [self convertSizeToBacking:self.frame.size].height - p.y, u, ticks());
+	//absmousetrack(p.x, [self convertSizeToBacking:self.frame.size].height - p.y, u, ticks());
 	if(u && _lastInputRect.size.width && _lastInputRect.size.height)
 		[self resetLastInputRect];
+		*/
 }
 
 - (void) sendmouse:(NSUInteger)u
 {
+	/*
 	mousetrack(0, 0, u, ticks());
 	if(u && _lastInputRect.size.width && _lastInputRect.size.height)
 		[self resetLastInputRect];
+		*/
 }
 
 - (void) mouseDown:(NSEvent*)event { [self mouseevent:event]; }
@@ -659,6 +675,7 @@ evkey(uint v)
 
 - (void)touchesEndedWithEvent:(NSEvent*)e
 {
+	/*
 	if(_tapping
 		&& [e touchesMatchingPhase:NSTouchPhaseTouching inView:nil].count == 0
 		&& ticks() - _tapTime < 250){
@@ -675,6 +692,7 @@ evkey(uint v)
 		}
 		_tapping = NO;
 	}
+	*/
 }
 
 - (void)touchesCancelledWithEvent:(NSEvent*)e
@@ -689,19 +707,23 @@ evkey(uint v)
 
 - (void) resetCursorRects
 {
+	/*
 	[super resetCursorRects];
 	lock(&cursor.lk);
 	[self addCursorRect:self.bounds cursor:currentCursor];
 	unlock(&cursor.lk);
+	*/
 }
 
 - (void) reshape
 {
+	/*
 	NSSize s = [self convertSizeToBacking:self.frame.size];
 	LOG(@"%g %g", s.width, s.height);
 	if(gscreen != nil){
 		screenresize(Rect(0, 0, s.width, s.height));
 	}
+	*/
 }
 
 - (void)windowDidResize:(NSNotification *)notification
@@ -727,8 +749,10 @@ evkey(uint v)
 static void
 keystroke(Rune r)
 {
+	/*
 	kbdkey(r, 1);
 	kbdkey(r, 0);
+	*/
 }
 
 // conforms to protocol NSTextInputClient
@@ -748,6 +772,7 @@ keystroke(Rune r)
 	selectedRange:(NSRange)sRange
 	replacementRange:(NSRange)rRange
 {
+	/*
 	NSString *str;
 
 	[self clearInput];
@@ -795,6 +820,7 @@ keystroke(Rune r)
 		for(uint i = 0; i < l; ++i)
 			keystroke(Kleft);
 	}
+	*/
 }
 - (void)unmarkText
 {
@@ -824,6 +850,7 @@ keystroke(Rune r)
 - (void)insertText:(id)s
 	replacementRange:(NSRange)r
 {
+	/*
 	NSUInteger i;
 	NSUInteger len;
 
@@ -835,6 +862,7 @@ keystroke(Rune r)
 	[_tmpText deleteCharactersInRange:NSMakeRange(0, _tmpText.length)];
 	_markedRange = NSMakeRange(NSNotFound, 0);
 	_selectedRange = NSMakeRange(0, 0);
+	*/
 }
 - (NSUInteger)characterIndexForPoint:(NSPoint)point
 {
@@ -849,6 +877,7 @@ keystroke(Rune r)
 }
 - (void)doCommandBySelector:(SEL)s
 {
+	/*
 	NSEvent *e;
 	uint c, k;
 
@@ -857,6 +886,7 @@ keystroke(Rune r)
 	k = evkey(c);
 	if(k>0)
 		keystroke(k);
+	*/
 }
 
 // Helper for managing input rect approximately
@@ -876,6 +906,7 @@ keystroke(Rune r)
 
 - (void)clearInput
 {
+	/*
 	if(_tmpText.length){
 		uint l = 1 + _tmpText.length - NSMaxRange(_selectedRange)
 			+ (_selectedRange.length > 0);
@@ -885,6 +916,7 @@ keystroke(Rune r)
 		for(uint i = 0; i < l; ++i)
 			keystroke(Kbs);
 	}
+	*/
 }
 @end
 

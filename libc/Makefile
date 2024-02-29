@@ -11,7 +11,6 @@ OFILES=\
 	convM2S.$O\
 	convS2M.$O\
 	ctime.$O\
-	crypt.$O\
 	dial.$O\
 	dirfstat.$O\
 	dirfwstat.$O\
@@ -41,8 +40,6 @@ OFILES=\
 	netmkaddr.$O\
 	nsec.$O\
 	pow10.$O\
-	pushssl.$O\
-	pushtls.$O\
 	read9pmsg.$O\
 	readn.$O\
 	rune.$O\

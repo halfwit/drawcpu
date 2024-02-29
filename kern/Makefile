@@ -9,23 +9,14 @@ OFILES=\
 	chan.$O\
 	data.$O\
 	dev.$O\
-	devaudio.$O\
-	devaudio-$(AUDIO).$O\
 	devcmd.$O\
 	devcons.$O\
-	devdraw.$O\
 	devenv.$O\
 	devfs-$(OS).$O\
-	devip.$O\
-	devip-$(OS).$O\
-	devkbd.$O\
 	devlfd-$(OS).$O\
 	devmnt.$O\
-	devmouse.$O\
 	devpipe.$O\
 	devroot.$O\
-	devssl.$O\
-	devtls.$O\
 	devtab.$O\
 	dirread.$O\
 	error.$O\
@@ -43,7 +34,6 @@ OFILES=\
 	time.$O\
 	qio.$O\
 	qlock.$O\
-	term.$O\
 	wait.$O\
 	waserror.$O\
 	$(OS).$O

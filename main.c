@@ -4,11 +4,8 @@
 #include "kern/fns.h"
 #include "user.h"
 #include "drawcpu.h"
-#include "ip.h"
-#include "authsrv.h"
 
 char *argv0;
-char *authserver = "";
 char *dbgfile = "./debug.log";
 
 void

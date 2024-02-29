@@ -151,7 +151,7 @@ searchpath(char *w, char *v)
 	word *path;
 
 	if(w[0] && w[0] != '/' && w[0] != '#' &&
-	  (w[0] != '.' || (w[1] && w[1] != '/' && (w[1] != '.' || w[2] && w[2] != '/')))){
+	  (w[0] != '.' || (w[1] && w[1] != '/' && (w[1] != '.' || (w[2] && w[2] != '/'))))){
 		path = vlook(v)->val;
 		if(path)
 			return path;
@@ -340,7 +340,7 @@ execbind(void)
 			popword();
 		}
 	}
-	if(count(runq->argv->words)!=2 || (flag&MAFTER)&&(flag&MBEFORE))
+	if(count(runq->argv->words)!=2 || ((flag & MAFTER) && (flag & MBEFORE)))
 		goto Usage;
 	if(bind(runq->argv->words->word, runq->argv->words->next->word, flag) == -1)
 		goto Error;
@@ -729,7 +729,7 @@ Usage:
 	pushredir(RCLOSE, fd, 0);
 	runq->lex->qflag = qflag;
 	runq->iflag = iflag;
-	if(iflag || !bflag && flag['b']==0){
+	if(iflag || (!bflag && flag['b']==0)){
 		runq->lex->peekc=EOF;
 		runq->lex->epilog="";
 	}

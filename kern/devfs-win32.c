@@ -9,7 +9,8 @@
 #include	"fns.h"
 #include	"error.h"
 
-#include	<libsec.h>	/* for sha1 in pathhash() */
+// TODO: get sha1 without pulling in libsec
+//#include	<libsec.h>	/* for sha1 in pathhash() */
 
 typedef struct DIR	DIR;
 typedef	struct Ufsinfo	Ufsinfo;

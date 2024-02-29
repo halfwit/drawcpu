@@ -352,8 +352,8 @@ yylex(void)
 					t->rtype = CLOSE;
 				}
 			}
-			if(c!=']'
-			|| t->type==DUP && (t->rtype==HERE || t->rtype==APPEND))
+			if((c!=']'
+			|| t->type==DUP) && (t->rtype==HERE || t->rtype==APPEND))
 				goto RedirErr;
 			*w++=']';
 		}

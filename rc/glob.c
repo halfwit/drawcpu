@@ -51,7 +51,7 @@ globsort(word *left, word *right)
 static int
 matchfn(char *s, char *p)
 {
-	if(s[0]=='.' && (s[1]=='\0' || s[1]=='.' && s[2]=='\0') && p[0]!='.')
+	if(s[0]=='.' && ((s[1]=='\0' || s[1]=='.') && s[2]=='\0') && p[0]!='.')
 		return 0;
 	return match(s, p, '/');
 }

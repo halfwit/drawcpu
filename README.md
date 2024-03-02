@@ -14,7 +14,7 @@ TODO: plist
 
 ## Status
 
-This is about 90% of the way there. See [TODO]() for more information.
+This is about 90% of the way there. See [TODO](https://github.com/halfwit/drawcpu/blob/main/TODO) for more information.
  - mount is erroring when attempting to mount a client fd
  - proc doesn't exist on all systems, devproc would be useful in at least a limited scope inside the kernel
 

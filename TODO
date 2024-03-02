@@ -2,15 +2,20 @@ BUILTINS:
  - [x]' read'
  - [ ] 'write' ?
  - [x] 'ls'
- - [x] 'mount'
+ - [x] 'cat'
+ - [ ] 'srv' ?
+ - [~] 'mount' - DEBUG: spin up an exportfs on 9, dial() in our mount call to it to use as our fd to get output
  - [x] 'bind'
  - [ ] 'mkdir'
- - [ ] 'rm'
+ - [x] 'rm'
  - [ ] 'unmount'
  - [ ] 'ns'
+ - [~] 'test' - only -d and maybe -f for now
+ - [x] 'echo'
+ - [ ] 'cp'
 
 TODO:
- - [ ] Install rcmain properly on system, refer to it as needed
+ - [x] Install rcmain properly on system, refer to it as needed
  - [ ] have it export a var service=unix
  - [ ] Some people probably want aan?
  - [x] Move rc code to use our libc.h, u.h everywhere so our defs of open + such are correct
@@ -37,6 +42,7 @@ Kernel space needs:
  - devcons  - #c: needed, /dev/cons
  - devenv   - #e: needed, /dev/env
  - devfs    - #U: needed, local files
+ - devlfd   - #L: needed, /fd
  - devip    - #I: !needed, networking
  - devlfd   - #L: !needed
  - devmnt   - #M: needed, client shares
@@ -44,4 +50,5 @@ Kernel space needs:
  - devroot  - #/: needed, base of stack
  - devssl   - #D: !needed, ssl
  - devtls   - #a: !needed, tls
+ - devproc  - #p: needed, /dev/proc, overlay any existing 
  - devtab   - meta, needed - add/remove any devices that we add/remove, from here as well

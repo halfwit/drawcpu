@@ -60,10 +60,13 @@ main(int argc, char **argv)
 		panic("bind #c: %r");
 	if(bind("#e", "/env", MREPL|MCREATE) < 0)
 		panic("bind #e: %r");
+	if(bind("#I", "/net", MBEFORE) < 0)
+		panic("bind #I: %r");
 	if(bind("#U", "/root", MREPL) < 0)
 		panic("bind #U: %r");
     if(bind("/root", "/", MAFTER) < 0)
 		panic("bind /root: %r");
+
 	char *cmd[] = {
 		"drawcpu",
 		"-c"

@@ -14,6 +14,8 @@ OFILES=\
 	devenv.$O\
 	devfs-$(OS).$O\
 	devlfd-$(OS).$O\
+	devip-$(OS).$O\
+	devip.$O\
 	devmnt.$O\
 	devpipe.$O\
 	devroot.$O\

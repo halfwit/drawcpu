@@ -302,6 +302,59 @@ Usage:
 }
 
 void
+execrm(void)
+{
+	int i, recurse, force;
+	char *fd;
+	Dir *db;
+	word *a;
+
+	force = recurse = 0;
+	popword(); /* rm */
+	while(runq->argv->words && runq->argv->words->word[0]=='-'){
+		char *f = runq->argv->words->word+1;
+		if(*f == '-'){
+			popword();
+			break;
+		}
+		for(; *f; f++){
+			switch(*f){
+			case 'r':
+				recurse = 1;
+				break;
+			case 'f':
+				force = 1;
+				break;
+			default:
+				goto Usage;
+			}
+			popword();
+		}
+	}
+	a = runq->argv->words;
+	for(;a;a = a->next){
+		if(remove(a->word) != -1)
+			continue;
+		db = nil;
+		if(recurse && (db=dirstat(a->word))!=nil && (db->qid.type&QTDIR))
+			rmdir(a->word);
+		else
+			goto Error;
+		free(db);
+	}
+	return;
+Error:
+	pfmt(err, "rm: %r\n", strerror(errno));
+	poplist();
+	return;
+Usage:
+	pfmt(err, "usage: rm [-fr] file ...\n");
+	setstatus("rm usage");
+	poplist();
+	return;
+}
+
+void
 execns(void)
 {
 //print("Execns\n");
@@ -346,7 +399,6 @@ execbind(void)
 		goto Error;
 	return;
 Error:
-	setstatus("bind error");
 	poplist();
 	if(qflag)
 		return;
@@ -412,6 +464,7 @@ execmount(void)
 		goto Error;
 	if(sysmount(fd, -1, runq->argv->words->next->word, flag, spec) < 0)
 		goto Error;
+	poplist();
 	return;
 Error:
 	setstatus("mount error");
@@ -430,6 +483,105 @@ void
 execunmount(void)
 {
 	//unmount
+}
+
+int
+cat(int f, char *s)
+{
+	char buf[IOUNIT];
+	long n;
+	while((n=Read(f, buf, sizeof buf))>0)
+		if(Write(1, buf, n)!=n)
+			pfmt(err, "write error copying %s: %s", s, strerror(errno));
+	if(n < 0)
+		pfmt(err, "error reading %s: %s", s, strerror(errno));
+}
+
+void
+execcat(void)
+{
+	int f;
+	popword(); /* cat */
+	word *a;
+
+	a = runq->argv->words;
+	if(count(a) == 0){
+		cat(f, "<stdin>");
+		close(f);
+	} else for(;a;a = a->next){
+		f = Open(a->word, OREAD);
+		if(f < 0){
+			pfmt(err, "can't open %s: %s", a->word, strerror(errno));
+			break;
+		}
+		cat(f, a->word);
+		close(f);
+		write(1, "\n", 1);
+	}
+	poplist();
+}
+
+int
+hasmode(char *f, ulong m)
+{
+	int r;
+	Dir *dir;
+	dir = dirstat(f);
+	if (dir == nil)
+		return 0;
+	r = (dir->mode & m) != 0;
+	free(dir);
+	return r;
+}
+
+void
+exectest(void)
+{
+	/* TODO(halfwit): Only care about -d for my needs, but test has a ton of things */
+	setstatus("no such file");
+	if(strcmp(runq->argv->words->next->word, "-d")==0)
+		if(hasmode(runq->argv->words->next->next->word, DMDIR))
+			setstatus("");
+	poplist();
+}
+
+void
+execmkdir(void)
+{
+
+}
+
+void
+exececho(void)
+{
+	int nflag;
+	int i, len;
+	char *buf, *p;
+	word *a, *c;
+
+	nflag = 0;
+	popword(); /* echo */
+	a = runq->argv->words;
+	if(count(a) > 0 && strcmp(a->word, "-n") == 0){
+		a = a->next; // move up our counter as well
+		nflag = 1;
+	}
+	len = 1;
+	for(c = a; c; c = c->next)
+		len += strlen(c->word)+1;
+	buf = malloc(len);
+	if(buf == 0)
+		panic("no memory");
+	p = buf;
+	for(c = a; c; c = c->next){
+		strcpy(p, c->word);
+		p += strlen(p);
+		if(c->next)
+			*p++ = ' ';
+	}
+	if(!nflag)
+		*p++ = '\n';
+	write(1, buf, p-buf);
 }
 
 void
@@ -714,9 +866,6 @@ Usage:
 		fd = Open(file, 0);
 		if(fd >= 0)
 			break;
-		if(strcmp(file, "/fd/0")==0){
-			fd = open("/dev/cons", OREAD);
-		}
 		free(file);
 	}
 	if(fd<0){

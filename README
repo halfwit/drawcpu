@@ -1,6 +1,6 @@
 DESCRIPTION
 -----------
-This is a fork of Russ Cox's drawterm and plan9front's drawterm that listens for incoming rcpu requests, instead of making one itself
+This is a fork of Russ Cox's drawterm and plan9front's drawterm that listens for incoming rcpu requests, instead of making one itself. It has rc with enough builtins that run inside the kernel for a typical session
 
 
 INSTALLATION

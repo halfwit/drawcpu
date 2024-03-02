@@ -74,7 +74,8 @@ struct builtin{
 };
 extern void (*builtinfunc(char *name))(void);
 
-void execread(void), execns(void), execls(void);
+void execread(void), execns(void), execls(void), execcat(void);
+void execrm(void), execmkdir(void), exectest(void), exececho(void);
 void execbind(void), execmount(void), execunmount(void);
 void execcd(void), execwhatis(void), execeval(void), execexec(void);
 int execforkexec(void);

@@ -8,6 +8,8 @@ extern Dev consdevtab;
 extern Dev rootdevtab;
 extern Dev pipedevtab;
 extern Dev fsdevtab;
+extern Dev lfddevtab;
+extern Dev ipdevtab;
 extern Dev mntdevtab;
 extern Dev lfddevtab;
 extern Dev cmddevtab;
@@ -18,6 +20,8 @@ Dev *devtab[] = {
 	&consdevtab,
 	&pipedevtab,
 	&fsdevtab,
+	&lfddevtab,
+	&ipdevtab,
 	&mntdevtab,
 	&lfddevtab,
 	&cmddevtab,

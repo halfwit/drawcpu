@@ -30,6 +30,11 @@ builtin Builtin[] = {
 	"mount",	execmount,
 	"unmount",	execunmount,
 	"ls", 		execls,
+	"cat",		execcat,
+	"rm",       execrm,
+	"mkdir",    execmkdir,
+	"test",     exectest,
+	"echo",     exececho,
 	0
 };
 
@@ -412,8 +417,14 @@ Executable(char *file)
 int
 Open(char *file, int mode)
 {
+	int fd;
 	static int tab[] = {OREAD,OWRITE,ORDWR,OREAD|ORCLOSE};
-	return open(file, tab[mode&3]);
+	fd = open(file, tab[mode&3]);
+	if(fd < 0 && strcmp(file, "/fd/0") == 0)
+		fd = lfdfd(0);
+	if(fd < 0 && strcmp(file, "/fd/1") == 0)
+		fd = lfdfd(1);
+	return fd;
 }
 
 void
@@ -457,12 +468,6 @@ int
 Isatty(int fd)
 {
 	return isatty(fd);
-	/*
-	char buf[64];
-	if(fd2path(fd, buf, sizeof buf) != 0)
-		return 0;
-	return strlen(buf) >= 9 && strcmp(buf+strlen(buf)-9, "/dev/cons") == 0;
-	*/
 }
 
 void

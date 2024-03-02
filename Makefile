@@ -12,6 +12,7 @@ OFILES=\
 LIBS1=\
 	kern/libkern.a\
 	rc/librc.a\
+	libip/libip.a\
 	libmemdraw/libmemdraw.a\
 	libmemlayer/libmemlayer.a\
 	libdraw/libdraw.a\
@@ -34,7 +35,9 @@ clean:
 kern/libkern.a:
 	(cd kern; $(MAKE))
 
-
+libip/libip.a:
+	(cd libip; $(MAKE))
+	
 libmemdraw/libmemdraw.a:
 	(cd libmemdraw; $(MAKE))
 

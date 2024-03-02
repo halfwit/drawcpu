@@ -10,8 +10,6 @@ To build on Windows, you can't use Visual C. Use Mingw on cygwin.
 
 To build on Mac OS X, run CONF=osx-cocoa make.
 
-TODO: plist
-
 ## Status
 
 This is about 90% of the way there. See [TODO](https://github.com/halfwit/drawcpu/blob/main/TODO) for more information.
@@ -19,6 +17,8 @@ This is about 90% of the way there. See [TODO](https://github.com/halfwit/drawcp
  - proc doesn't exist on all systems, devproc would be useful in at least a limited scope inside the kernel
 
 ## Future
+
+The longer term goal is to interact with X11/Wayland/macOS/Windows graphical programs, from a plan9front system, with access to a proper namespace on the Unix side.
 
  - devdraw/devkbd/devmouse/devaudio integration for various toolkits, translating the other direction compared to drawterm
  - rework path, attempt to get a proper userland with frontbase or related that can be compiled externally

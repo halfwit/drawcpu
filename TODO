@@ -15,6 +15,7 @@ BUILTINS:
  - [ ] 'cp'
 
 TODO:
+ - [ ] rc builtins (see above)
  - [x] Install rcmain properly on system, refer to it as needed
  - [ ] have it export a var service=unix
  - [ ] Some people probably want aan?
@@ -31,7 +32,7 @@ TODO:
  - [x] libc.h rfork plan9port/src/lib9/rfork.c 
  - [x] libc.h wait plan9port/src/lib9/wait.c
  - [x] libc.h time plan9port/src/lib9/time.c
- - [ ] RFREND + RFNOMEM could probably be handled
+ - [ ] RFREND + RFNOMEM could probably be handled in rfork
 
 Kernel space needs:
  - devdraw  - #i: !needed, We use the client exported /dev/draw instead
@@ -42,13 +43,13 @@ Kernel space needs:
  - devcons  - #c: needed, /dev/cons
  - devenv   - #e: needed, /dev/env
  - devfs    - #U: needed, local files
- - devlfd   - #L: needed, /fd
- - devip    - #I: !needed, networking
- - devlfd   - #L: !needed
+ - devip    - #I: needed, networking
+ - devlfd   - #L: needed, local fd
  - devmnt   - #M: needed, client shares
- - devpipe  - #|: ?needed for pipe in rc
+ - devpipe  - #|: needed for pipes
  - devroot  - #/: needed, base of stack
  - devssl   - #D: !needed, ssl
  - devtls   - #a: !needed, tls
  - devproc  - #p: needed, /dev/proc, overlay any existing 
+ - devsrv   - #s: ~needed, if there's a compelling use case and interest
  - devtab   - meta, needed - add/remove any devices that we add/remove, from here as well

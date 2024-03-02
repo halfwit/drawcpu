@@ -4,7 +4,7 @@ BUILTINS:
  - [x] 'ls'
  - [x] 'cat'
  - [ ] 'srv' ?
- - [~] 'mount' - DEBUG: spin up an exportfs on 9, dial() in our mount call to it to use as our fd to get output
+ - [~] 'mount' - currently not working
  - [x] 'bind'
  - [ ] 'mkdir'
  - [x] 'rm'
